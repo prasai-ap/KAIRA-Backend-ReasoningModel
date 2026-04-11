@@ -42,7 +42,7 @@ class BirthInput(BaseModel):
 
     # PyJHora dhasa_level_index: 1..6
     levels: int = Field(
-        3,
+        2,
         description="Dasha depth 1..6 (1=Maha, 2=+Antar, 3=+Pratyantar, 4=+Sookshma, 5=+Prana, 6=+Deha)",
     )
 
