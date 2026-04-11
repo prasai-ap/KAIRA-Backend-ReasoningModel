@@ -1,2 +1,5 @@
 .env
 kairabackend
+__pycache__/
+.env
+*.pyc
