@@ -61,3 +61,30 @@ def api_charts(inp: BirthInput) -> Dict[str, Any]:
         "charts": {"D1": d1, "D9": d9},
     }
 
+@router.post("/api/dasha")
+def api_dasha(inp: BirthInput) -> Dict[str, Any]:
+    if not (1 <= int(inp.levels) <= 6):
+        raise HTTPException(status_code=422, detail="levels must be between 1 and 6")
+
+    jd = jd_from_birth(inp)
+
+    try:
+        set_ayanamsa_mode_safe(jd)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ayanamsa setup failed: {e}")
+
+    place_obj = place_to_obj(inp.place)
+
+    try:
+        vim = compute_vimshottari(jd, place_obj, levels=int(inp.levels))
+        tri = compute_tribhagi(jd, place_obj, levels=int(inp.levels))
+        yog = compute_yogini(jd, place_obj)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Dasha calculation failed: {e}")
+
+    return {
+        "meta": {"ayanamsa": AYANAMSA_MODE, "julian_day": jd, "levels": int(inp.levels)},
+        "vimshottari": vim,
+        "tribhagi": tri,
+        "yogini": yog,
+    }
