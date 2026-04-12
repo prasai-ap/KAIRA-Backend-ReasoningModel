@@ -1,8 +1,7 @@
 from typing import Any, Dict, List
 from jhora.horoscope.chart import charts
 from jhora import const
-
-from app.services.astrology.constants import *
+from app.utils.helpers import _house_from_lagna
 
 
 def _house_from_lagna(lagna_rasi_index: int, planet_rasi_index: int) -> int:
