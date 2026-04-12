@@ -3,6 +3,7 @@ from jhora.horoscope.chart import charts
 from jhora.panchanga import drik
 from jhora import const
 from app.utils.helpers import _house_from_lagna
+from app.core.config import PLANET_ID_TO_NAME, RASI_INDEX_TO_NAME, WEEKDAY_EN, NAKSHATRA_EN, TITHI_NAMES_SHUKLA, TITHI_NAMES_KRISHNA
 
 def _house_from_lagna(lagna_rasi_index: int, planet_rasi_index: int) -> int:
     return ((int(planet_rasi_index) - int(lagna_rasi_index)) % 12) + 1

@@ -2,7 +2,7 @@ from typing import Any, Dict, Optional
 from jhora import utils
 from jhora.panchanga import drik
 from jhora.horoscope.chart import charts
-
+from app.core.config import RASI_INDEX_TO_NAME
 from app.utils.helpers import (
     _weekday_from_jd,
     _tithi_from_drik,
@@ -10,26 +10,6 @@ from app.utils.helpers import (
     _nakshatra_from_drik,
     strip_nulls
 )
-
-WEEKDAY_EN = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-
-NAKSHATRA_EN = [
-    "Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashirsha", "Ardra", "Punarvasu",
-    "Pushya", "Ashlesha", "Magha", "Purva Phalguni", "Uttara Phalguni", "Hasta", "Chitra",
-    "Swati", "Vishakha", "Anuradha", "Jyeshtha", "Mula", "Purva Ashadha", "Uttara Ashadha",
-    "Shravana", "Dhanishta", "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada", "Revati",
-]
-
-TITHI_NAMES_SHUKLA = [
-    "Pratipada", "Dvitiya", "Tritiya", "Chaturthi", "Panchami",
-    "Shashthi", "Saptami", "Ashtami", "Navami", "Dashami",
-    "Ekadashi", "Dwadashi", "Trayodashi", "Chaturdashi", "Purnima",
-]
-TITHI_NAMES_KRISHNA = [
-    "Pratipada", "Dvitiya", "Tritiya", "Chaturthi", "Panchami",
-    "Shashthi", "Saptami", "Ashtami", "Navami", "Dashami",
-    "Ekadashi", "Dwadashi", "Trayodashi", "Chaturdashi", "Amavasya",
-]
 
 def compute_summary_card_en(jd: float, place_obj: drik.Place, chart_method: int, calculation_type: str) -> Dict[str, Any]:
     lagna_sign = None

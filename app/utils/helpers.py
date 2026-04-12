@@ -1,7 +1,15 @@
 import re
 from typing import Any, Dict, List, Optional, Tuple
 from app.models.birth import PlaceIn, BirthInput
-from app.core.config import YOGINI_LORD_ID_TO_YOGINI_NAME, DASHA_PLANET_ID_TO_NAME, AYANAMSA_MODE
+from app.core.config import (
+    YOGINI_LORD_ID_TO_YOGINI_NAME, 
+    DASHA_PLANET_ID_TO_NAME, 
+    AYANAMSA_MODE,
+    WEEKDAY_EN,
+    NAKSHATRA_EN,
+    TITHI_NAMES_SHUKLA,
+    TITHI_NAMES_KRISHNA,
+)
 from jhora import utils, const
 from jhora.panchanga import drik
 
