@@ -2,24 +2,30 @@ from typing import Any, Dict, List, Optional, Tuple
 from app.core.config import DASHA_PLANET_ID_TO_NAME, YOGINI_LORD_ID_TO_YOGINI_NAME
 
 
-def _extract_pid(value: Any) -> int:
-    if isinstance(value, (int, float)):
-        return int(value)
-
-    if isinstance(value, (list, tuple)) and len(value) > 0:
-        first = value[0]
-        if isinstance(first, (int, float)):
-            return int(first)
-        return int(first)
-
-    return int(value)
-
 def _planet_name(pid: int) -> str:
     return DASHA_PLANET_ID_TO_NAME.get(int(pid), str(pid))
 
 
 def _yogini_name_from_lord_id(pid: int) -> str:
     return YOGINI_LORD_ID_TO_YOGINI_NAME.get(int(pid), _planet_name(int(pid)))
+
+
+def _extract_pid(value: Any) -> int:
+    if isinstance(value, int):
+        return value
+
+    if isinstance(value, float):
+        return int(value)
+
+    if isinstance(value, (list, tuple)) and len(value) > 0:
+        first = value[0]
+        if isinstance(first, int):
+            return first
+        if isinstance(first, float):
+            return int(first)
+        return int(first)
+
+    return int(value)
 
 
 def _set_end_times(items: List[Dict[str, Any]]) -> None:
@@ -53,8 +59,10 @@ def dasha_rows_to_tree(rows: List[List[Any]], level: int) -> Dict[str, Any]:
         for r in rows:
             if len(r) < 2:
                 continue
+
             maha_pid = _extract_pid(r[0])
             start_str = r[-1]
+
             mahadashas.append(
                 {
                     "planet_id": maha_pid,
@@ -62,6 +70,7 @@ def dasha_rows_to_tree(rows: List[List[Any]], level: int) -> Dict[str, Any]:
                     "start": start_str,
                 }
             )
+
         _set_end_times(mahadashas)
         return {"level": 1, "mahadashas": mahadashas}
 
@@ -90,7 +99,11 @@ def dasha_rows_to_tree(rows: List[List[Any]], level: int) -> Dict[str, Any]:
             maha_entry["start"] = start_str
 
         antar_list: List[Dict[str, Any]] = maha_entry["antardashas"]
-        antar_node = next((x for x in antar_list if int(x["planet_id"]) == antara_pid), None)
+
+        antar_node = next(
+            (x for x in antar_list if int(x["planet_id"]) == antara_pid),
+            None,
+        )
 
         if antar_node is None:
             antar_node = {
@@ -108,6 +121,7 @@ def dasha_rows_to_tree(rows: List[List[Any]], level: int) -> Dict[str, Any]:
                 continue
 
             praty_pid = _extract_pid(r[2])
+
             praty_list: List[Dict[str, Any]] = antar_node["pratyantardashas"]
             praty_list.append(
                 {
@@ -134,6 +148,7 @@ def dasha_rows_to_tree(rows: List[List[Any]], level: int) -> Dict[str, Any]:
                 _set_end_times(praty_list)
 
     return {"level": max(2, lvl), "mahadashas": mahadashas}
+
 
 def yogini_rows_to_tree_level2(rows: List[Tuple[Any, ...]]) -> Dict[str, Any]:
     maha_map: Dict[int, Dict[str, Any]] = {}
