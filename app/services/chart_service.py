@@ -3,7 +3,6 @@ from jhora.horoscope.chart import charts
 from jhora import const
 from app.utils.helpers import _house_from_lagna
 
-
 def _house_from_lagna(lagna_rasi_index: int, planet_rasi_index: int) -> int:
     return ((int(planet_rasi_index) - int(lagna_rasi_index)) % 12) + 1
 
