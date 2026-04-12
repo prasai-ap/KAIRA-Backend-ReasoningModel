@@ -1,6 +1,13 @@
 from typing import Any, Dict, Optional, List, Tuple
 from app.core.config import YOGINI_LORD_ID_TO_YOGINI_NAME
 
+def _as_int(value: Any) -> int:
+    if isinstance(value, (list, tuple)):
+        if not value:
+            raise ValueError("Empty tuple/list cannot be converted to int")
+        value = value[0]
+    return int(value)
+
 def _set_end_times(items: List[Dict[str, Any]]) -> None:
     for i in range(len(items)):
         items[i]["end"] = items[i + 1].get("start") if i < len(items) - 1 else None
@@ -39,9 +46,15 @@ def dasha_rows_to_tree(rows: List[List[Any]], level: int) -> Dict[str, Any]:
         for r in rows:
             if len(r) < 2:
                 continue
-            maha_pid = int(r[0])
+            maha_pid = _as_int(r[0])
             start_str = r[-1]
-            mahadashas.append({"planet_id": maha_pid, "planet": _planet_name(maha_pid), "start": start_str})
+            mahadashas.append(
+                {
+                    "planet_id": maha_pid,
+                    "planet": _planet_name(maha_pid),
+                    "start": start_str,
+                }
+            )
         _set_end_times(mahadashas)
         return {"level": 1, "mahadashas": mahadashas}
 
@@ -49,21 +62,37 @@ def dasha_rows_to_tree(rows: List[List[Any]], level: int) -> Dict[str, Any]:
     for r in rows:
         if len(r) < 3:
             continue
-        maha_pid = int(r[0])
-        antara_pid = int(r[1])
+
+        maha_pid = _as_int(r[0])
+        antara_pid = _as_int(r[1])
         start_str = r[-1]
 
         if maha_pid not in maha_map:
-            maha_map[maha_pid] = {"planet_id": maha_pid, "planet": _planet_name(maha_pid), "start": None, "end": None, "antardashas": []}
+            maha_map[maha_pid] = {
+                "planet_id": maha_pid,
+                "planet": _planet_name(maha_pid),
+                "start": None,
+                "end": None,
+                "antardashas": [],
+            }
 
         maha_entry = maha_map[maha_pid]
         if maha_entry["start"] is None:
             maha_entry["start"] = start_str
 
         antar_list: List[Dict[str, Any]] = maha_entry["antardashas"]
-        antar_node = next((x for x in antar_list if int(x["planet_id"]) == antara_pid), None)
+        antar_node = next(
+            (x for x in antar_list if int(x["planet_id"]) == antara_pid),
+            None,
+        )
+
         if antar_node is None:
-            antar_node = {"planet_id": antara_pid, "planet": _planet_name(antara_pid), "start": start_str, "end": None}
+            antar_node = {
+                "planet_id": antara_pid,
+                "planet": _planet_name(antara_pid),
+                "start": start_str,
+                "end": None,
+            }
             if lvl >= 3:
                 antar_node["pratyantardashas"] = []
             antar_list.append(antar_node)
@@ -71,9 +100,16 @@ def dasha_rows_to_tree(rows: List[List[Any]], level: int) -> Dict[str, Any]:
         if lvl >= 3:
             if len(r) < 4:
                 continue
-            praty_pid = int(r[2])
-            praty_list: List[Dict[str, Any]] = antar_node["pratyantardashas"]  # type: ignore[index]
-            praty_list.append({"planet_id": praty_pid, "planet": _planet_name(praty_pid), "start": start_str, "end": None})
+            praty_pid = _as_int(r[2])
+            praty_list: List[Dict[str, Any]] = antar_node["pratyantardashas"]
+            praty_list.append(
+                {
+                    "planet_id": praty_pid,
+                    "planet": _planet_name(praty_pid),
+                    "start": start_str,
+                    "end": None,
+                }
+            )
 
     mahadashas = list(maha_map.values())
     mahadashas.sort(key=lambda x: (x["start"] or ""))
@@ -94,22 +130,40 @@ def dasha_rows_to_tree(rows: List[List[Any]], level: int) -> Dict[str, Any]:
 
 def yogini_rows_to_tree_level2(rows: List[Tuple[Any, ...]]) -> Dict[str, Any]:
     maha_map: Dict[int, Dict[str, Any]] = {}
+
     for r in rows:
         if len(r) < 4:
             continue
-        l1 = int(r[0])
-        l2 = int(r[1])
+
+        l1 = _as_int(r[0])
+        l2 = _as_int(r[1])
         start_str = r[-2]
         dur_years = float(r[-1])
 
         if l1 not in maha_map:
-            maha_map[l1] = {"yogini": _yogini_name_from_lord_id(l1), "lord_planet_id": l1, "lord_planet": _planet_name(l1), "start": None, "end": None, "antardashas": []}
+            maha_map[l1] = {
+                "yogini": _yogini_name_from_lord_id(l1),
+                "lord_planet_id": l1,
+                "lord_planet": _planet_name(l1),
+                "start": None,
+                "end": None,
+                "antardashas": [],
+            }
 
         maha = maha_map[l1]
         if maha["start"] is None:
             maha["start"] = start_str
 
-        maha["antardashas"].append({"yogini": _yogini_name_from_lord_id(l2), "lord_planet_id": l2, "lord_planet": _planet_name(l2), "start": start_str, "end": None, "dur_years": dur_years})
+        maha["antardashas"].append(
+            {
+                "yogini": _yogini_name_from_lord_id(l2),
+                "lord_planet_id": l2,
+                "lord_planet": _planet_name(l2),
+                "start": start_str,
+                "end": None,
+                "dur_years": dur_years,
+            }
+        )
 
     mahadashas = list(maha_map.values())
     mahadashas.sort(key=lambda x: (x["start"] or ""))
