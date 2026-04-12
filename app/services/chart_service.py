@@ -1,5 +1,6 @@
 from typing import Any, Dict, List
 from jhora.horoscope.chart import charts
+from jhora.panchanga import drik
 from jhora import const
 from app.utils.helpers import _house_from_lagna
 
