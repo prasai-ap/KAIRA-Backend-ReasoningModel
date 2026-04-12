@@ -1,24 +1,20 @@
 import re
 from typing import Any, Dict, List, Optional, Tuple
+
 from app.models.birth import PlaceIn, BirthInput
 from app.core.config import (
-    YOGINI_LORD_ID_TO_YOGINI_NAME, 
-    DASHA_PLANET_ID_TO_NAME, 
+    YOGINI_LORD_ID_TO_YOGINI_NAME,
+    DASHA_PLANET_ID_TO_NAME,
     AYANAMSA_MODE,
     WEEKDAY_EN,
     NAKSHATRA_EN,
     TITHI_NAMES_SHUKLA,
     TITHI_NAMES_KRISHNA,
+    RASI_INDEX_TO_NAME,
 )
+
 from jhora import utils, const
 from jhora.panchanga import drik
-
-def _planet_name(pid: int) -> str:
-    return DASHA_PLANET_ID_TO_NAME.get(int(pid), str(pid))
-
-
-def _yogini_name_from_lord_id(pid: int) -> str:
-    return YOGINI_LORD_ID_TO_YOGINI_NAME.get(int(pid), _planet_name(int(pid)))
 
 def _validate_jd(jd: float) -> None:
     if jd < 625000.5 or jd > 2818000.5:
@@ -53,6 +49,7 @@ def jd_from_birth(b: BirthInput) -> float:
     tob = (b.hour, b.minute, b.second)
     return utils.julian_day_number(dob, tob)
 
+
 def _html_to_text(s: Any) -> str:
     if s is None:
         return ""
@@ -61,6 +58,7 @@ def _html_to_text(s: Any) -> str:
     s = re.sub(r"</?html>", "", s, flags=re.IGNORECASE)
     s = re.sub(r"<[^>]+>", "", s)
     return s.strip()
+
 
 def strip_nulls(obj: Any) -> Any:
     if isinstance(obj, dict):
@@ -75,6 +73,7 @@ def strip_nulls(obj: Any) -> Any:
                 continue
             cleaned[k] = v2
         return cleaned
+
     if isinstance(obj, list):
         cleaned_list: List[Any] = []
         for v in obj:
@@ -87,13 +86,15 @@ def strip_nulls(obj: Any) -> Any:
                 continue
             cleaned_list.append(v2)
         return cleaned_list
+
     return obj
+
 
 def _weekday_from_jd(jd: float) -> Optional[str]:
     try:
         import datetime as dt
         y, m, d, _fh = utils.jd_to_gregorian(jd)
-        wd = dt.date(int(y), int(m), int(d)).weekday()  # Monday=0
+        wd = dt.date(int(y), int(m), int(d)).weekday()
         return WEEKDAY_EN[wd]
     except Exception:
         return None
@@ -134,7 +135,7 @@ def _tithi_from_drik(jd: float, place_obj: drik.Place) -> Optional[Dict[str, Any
 
 def _moon_rasi_from_d1_positions(d1_positions: List[Any]) -> Optional[str]:
     for pid, (rasi, _lon) in d1_positions:
-        if int(pid) == 1:  # Moon
+        if int(pid) == 1:
             rasi0 = int(rasi)
             if 0 <= rasi0 <= 11:
                 return RASI_INDEX_TO_NAME[rasi0]
@@ -144,16 +145,21 @@ def _moon_rasi_from_d1_positions(d1_positions: List[Any]) -> Optional[str]:
 def _nakshatra_from_drik(jd: float, place_obj: drik.Place) -> Tuple[Optional[str], Optional[int], Any]:
     if not hasattr(drik, "nakshatra"):
         return (None, None, None)
+
     try:
         nk = drik.nakshatra(jd, place_obj)
     except Exception:
         return (None, None, None)
 
-    if isinstance(nk, (list, tuple)) and len(nk) >= 2 and isinstance(nk[0], (int, float)) and isinstance(nk[1], (int, float)):
+    if (
+        isinstance(nk, (list, tuple))
+        and len(nk) >= 2
+        and isinstance(nk[0], (int, float))
+        and isinstance(nk[1], (int, float))
+    ):
         nak_no = int(nk[0])
         pada = int(nk[1])
         name = NAKSHATRA_EN[nak_no - 1] if 1 <= nak_no <= 27 else None
         return (name, pada, nk)
 
     return (str(nk), None, nk)
-

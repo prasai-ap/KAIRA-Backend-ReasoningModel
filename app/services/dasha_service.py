@@ -1,5 +1,6 @@
 from typing import Dict, Any
-from jhora.horoscope.dhasa.graha import vimsottari, yogini
+from jhora.horoscope.dhasa.graha import vimsottari
+from jhora.horoscope.dhasa.graha import yogini as yogini_mod
 from jhora import utils, const
 from jhora.panchanga import drik
 
@@ -35,7 +36,6 @@ def compute_tribhagi(jd: float, place_obj: drik.Place, levels: int) -> Dict[str,
     return {"type": "tribhagi", "balance": vim_bal, "tree": tree}
 
 def compute_yogini(jd: float, place_obj: drik.Place) -> Dict[str, Any]:
-    from jhora.horoscope.dhasa.graha import yogini as yogini_mod
     y, m, d, fh = utils.jd_to_gregorian(jd)
     dob = drik.Date(int(y), int(m), int(d))
     hour = int(fh)
