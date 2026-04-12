@@ -107,3 +107,20 @@ def api_yoga(inp: BirthInput) -> Dict[str, Any]:
 
     return {"meta": {"ayanamsa": AYANAMSA_MODE, "julian_day": jd, "chart": "D1", "language": inp.language}, "yogas": yogas}
 
+@router.post("/api/dosha")
+def api_dosha(inp: BirthInput) -> Dict[str, Any]:
+    jd = jd_from_birth(inp)
+
+    try:
+        set_ayanamsa_mode_safe(jd)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ayanamsa setup failed: {e}")
+
+    place_obj = place_to_obj(inp.place)
+
+    try:
+        doshas = compute_doshas_d1(jd, place_obj, language=inp.language)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Dosha calculation failed: {e}")
+
+    return {"meta": {"ayanamsa": AYANAMSA_MODE, "julian_day": jd, "chart": "D1", "language": inp.language}, "doshas": doshas}
