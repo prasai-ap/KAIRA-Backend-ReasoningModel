@@ -1,4 +1,5 @@
 from typing import List, Dict, Any
+from jhora.panchanga import drik
 from jhora.horoscope.chart import dosha as dosha_mod
 
 from app.utils.helpers import _html_to_text
