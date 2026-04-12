@@ -1,10 +1,7 @@
-import re
-from typing import Any, Dict, List, Tuple, Optional
-
 from jhora import const, utils
 from jhora.panchanga import drik
-
-from app.core.config import AYANAMSA_MODE
+from typing import Any, Dict, List, Tuple, Optional
+import re
 
 def _validate_jd(jd: float) -> None:
     # Swiss Ephemeris supported JD range shown in your error message
