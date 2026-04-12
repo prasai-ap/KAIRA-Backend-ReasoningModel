@@ -1,3 +1,5 @@
+from jhora import const
+
 AYANAMSA_MODE = "LAHIRI"
 
 
