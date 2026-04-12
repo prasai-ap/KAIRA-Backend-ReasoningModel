@@ -28,6 +28,10 @@ def set_ayanamsa_mode_safe(jd: float) -> None:
     drik.set_ayanamsa_mode(mode, jd=jd)
 
 
+def _house_from_lagna(lagna_rasi_index: int, planet_rasi_index: int) -> int:
+    return ((int(planet_rasi_index) - int(lagna_rasi_index)) % 12) + 1
+
+
 def place_to_tuple(p: PlaceIn) -> Tuple[str, float, float, float]:
     return (str(p.name), float(p.latitude), float(p.longitude), float(p.timezone))
 
