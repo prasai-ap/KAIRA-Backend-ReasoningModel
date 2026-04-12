@@ -1,7 +1,6 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import Literal
 
-from app.models.place import PlaceIn
 
 class PlaceIn(BaseModel):
     name: str = "Unknown"
