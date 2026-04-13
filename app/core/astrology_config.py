@@ -22,7 +22,17 @@ PLANET_ID_TO_NAME = {
     8: "Ketu",
 }
 
-DASHA_PLANET_ID_TO_NAME = PLANET_ID_TO_NAME.copy()
+DASHA_PLANET_ID_TO_NAME = {
+    0: "Sun",
+    1: "Moon",
+    2: "Mars",
+    3: "Mercury",
+    4: "Jupiter",
+    5: "Venus",
+    6: "Saturn",
+    7: "Rahu",
+    8: "Ketu",
+}
 
 
 YOGINI_ORDERED = [

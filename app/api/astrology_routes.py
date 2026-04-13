@@ -1,26 +1,17 @@
+from typing import Any, Dict
 from fastapi import APIRouter, HTTPException
-from typing import Dict, Any
-from app.core.config import AYANAMSA_MODE
-from app.models.birth import BirthInput
 
-from app.utils.helpers import (
-    jd_from_birth,
-    place_to_obj,
-    place_to_tuple,
-    set_ayanamsa_mode_safe
-)
-
+from app.models.astrology_models import BirthInput
+from app.core.astrology_config import AYANAMSA_MODE
+from app.utils.astrology_helpers import jd_from_birth, set_ayanamsa_mode_safe, place_to_tuple, place_to_obj
 from app.services.chart_service import compute_chart
 from app.services.summary_service import compute_summary_card_en
-from app.services.dasha_service import (
-    compute_vimshottari,
-    compute_tribhagi,
-    compute_yogini
-)
+from app.services.dasha_service import compute_vimshottari, compute_tribhagi, compute_yogini
 from app.services.yoga_service import compute_yogas_d1
 from app.services.dosha_service import compute_doshas_d1
 
 router = APIRouter()
+
 
 @router.post("/api/charts")
 def api_charts(inp: BirthInput) -> Dict[str, Any]:
@@ -37,10 +28,7 @@ def api_charts(inp: BirthInput) -> Dict[str, Any]:
     try:
         d1 = compute_chart(jd, place_obj, 1, inp.chart_method, inp.calculation_type)
         d9 = compute_chart(jd, place_obj, 9, inp.chart_method, inp.calculation_type)
-
-        # ADDED: summary card (no extra fields, no nulls)
         summary_card = compute_summary_card_en(jd, place_obj, inp.chart_method, inp.calculation_type)
-
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Chart calculation failed: {e}")
 
@@ -56,11 +44,19 @@ def api_charts(inp: BirthInput) -> Dict[str, Any]:
                 "longitude": place_tuple[2],
                 "timezone": place_tuple[3],
             },
-            "birth": {"year": inp.year, "month": inp.month, "day": inp.day, "hour": inp.hour, "minute": inp.minute, "second": inp.second},
+            "birth": {
+                "year": inp.year,
+                "month": inp.month,
+                "day": inp.day,
+                "hour": inp.hour,
+                "minute": inp.minute,
+                "second": inp.second,
+            },
         },
         "summary_card": summary_card,
         "charts": {"D1": d1, "D9": d9},
     }
+
 
 @router.post("/api/dasha")
 def api_dasha(inp: BirthInput) -> Dict[str, Any]:
@@ -90,6 +86,7 @@ def api_dasha(inp: BirthInput) -> Dict[str, Any]:
         "yogini": yog,
     }
 
+
 @router.post("/api/yoga")
 def api_yoga(inp: BirthInput) -> Dict[str, Any]:
     jd = jd_from_birth(inp)
@@ -107,6 +104,7 @@ def api_yoga(inp: BirthInput) -> Dict[str, Any]:
         raise HTTPException(status_code=400, detail=f"Yoga calculation failed: {e}")
 
     return {"meta": {"ayanamsa": AYANAMSA_MODE, "julian_day": jd, "chart": "D1", "language": inp.language}, "yogas": yogas}
+
 
 @router.post("/api/dosha")
 def api_dosha(inp: BirthInput) -> Dict[str, Any]:

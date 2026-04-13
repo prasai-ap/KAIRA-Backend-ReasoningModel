@@ -1,22 +1,14 @@
 import json
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from jhora import const, utils
 from jhora.panchanga import drik
 from jhora.tests import test_yogas
 
-from app.utils.helpers import _html_to_text
+from app.utils.astrology_helpers import _html_to_text
+
 
 def compute_yogas_d1(jd: float, place_obj: drik.Place, language: str = "en") -> List[Dict[str, Any]]:
-    """
-    Returns only yogas present in D1 with:
-      - name
-      - description
-      - prediction
-    """
-    import json
-    from jhora.tests import test_yogas
-
     json_file = const._LANGUAGE_PATH + const._DEFAULT_YOGA_JSON_FILE_PREFIX + language + ".json"
     with open(json_file, "r", encoding="utf-8") as f:
         msgs = json.load(f)

@@ -1,12 +1,10 @@
 from typing import Any, Dict, List
-from jhora.horoscope.chart import charts
-from jhora.panchanga import drik
 from jhora import const
-from app.utils.helpers import _house_from_lagna
-from app.core.config import PLANET_ID_TO_NAME, RASI_INDEX_TO_NAME, WEEKDAY_EN, NAKSHATRA_EN, TITHI_NAMES_SHUKLA, TITHI_NAMES_KRISHNA
+from jhora.panchanga import drik
+from jhora.horoscope.chart import charts
 
-def _house_from_lagna(lagna_rasi_index: int, planet_rasi_index: int) -> int:
-    return ((int(planet_rasi_index) - int(lagna_rasi_index)) % 12) + 1
+from app.core.astrology_config import PLANET_ID_TO_NAME, RASI_INDEX_TO_NAME
+from app.utils.astrology_helpers import _house_from_lagna
 
 
 def positions_to_json_with_houses(planet_positions: List[Any]) -> Dict[str, Any]:
@@ -18,7 +16,7 @@ def positions_to_json_with_houses(planet_positions: List[Any]) -> Dict[str, Any]
     if lagna_rasi0 is None:
         lagna_rasi0 = 0
 
-    out: List[Dict[str, Any]] = []
+    out = []
     for planet_id, (rasi, lon) in planet_positions:
         rasi0 = int(rasi)
         out.append(
@@ -35,12 +33,22 @@ def positions_to_json_with_houses(planet_positions: List[Any]) -> Dict[str, Any]
         )
 
     return {
-        "lagna": {"rasi_no": lagna_rasi0 + 1, "rasi_index": lagna_rasi0, "rasi": RASI_INDEX_TO_NAME[lagna_rasi0]},
+        "lagna": {
+            "rasi_no": lagna_rasi0 + 1,
+            "rasi_index": lagna_rasi0,
+            "rasi": RASI_INDEX_TO_NAME[lagna_rasi0],
+        },
         "positions": out,
     }
 
 
-def compute_chart(jd: float, place_obj: drik.Place, divisional_chart_factor: int, chart_method: int, calculation_type: str) -> Dict[str, Any]:
+def compute_chart(
+    jd: float,
+    place_obj: drik.Place,
+    divisional_chart_factor: int,
+    chart_method: int,
+    calculation_type: str,
+) -> Dict[str, Any]:
     pp = charts.divisional_chart(
         jd_at_dob=jd,
         place_as_tuple=place_obj,

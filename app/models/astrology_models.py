@@ -1,5 +1,7 @@
-from pydantic import BaseModel, Field, model_validator
+from __future__ import annotations
+
 from typing import Literal
+from pydantic import BaseModel, Field, model_validator
 
 
 class PlaceIn(BaseModel):
@@ -18,7 +20,9 @@ class PlaceIn(BaseModel):
             if len(v) == 3:
                 lat, lon, tz = v
                 return {"name": "Unknown", "latitude": lat, "longitude": lon, "timezone": tz}
+            raise ValueError("place must be (name,lat,lon,tz) or (lat,lon,tz)")
         return v
+
 
 class BirthInput(BaseModel):
     year: int
@@ -30,9 +34,10 @@ class BirthInput(BaseModel):
 
     place: PlaceIn
 
-    chart_method: int = 1
+    chart_method: int = Field(1, description="PyJHora chart method")
     calculation_type: Literal["drik", "ss"] = "drik"
-
-    levels: int = Field(2)
-
-    language: str = "en"
+    levels: int = Field(
+        2,
+        description="Dasha depth 1..6 (1=Maha, 2=+Antar, 3=+Pratyantar, 4=+Sookshma, 5=+Prana, 6=+Deha)",
+    )
+    language: str = Field("en", description="Language code for resource messages")

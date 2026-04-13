@@ -1,17 +1,23 @@
-from typing import Any, Dict, Optional
-from jhora import utils
+from typing import Any, Dict
 from jhora.panchanga import drik
 from jhora.horoscope.chart import charts
-from app.core.config import RASI_INDEX_TO_NAME
-from app.utils.helpers import (
+
+from app.core.astrology_config import RASI_INDEX_TO_NAME
+from app.utils.astrology_helpers import (
     _weekday_from_jd,
     _tithi_from_drik,
     _moon_rasi_from_d1_positions,
     _nakshatra_from_drik,
-    strip_nulls
+    strip_nulls,
 )
 
-def compute_summary_card_en(jd: float, place_obj: drik.Place, chart_method: int, calculation_type: str) -> Dict[str, Any]:
+
+def compute_summary_card_en(
+    jd: float,
+    place_obj: drik.Place,
+    chart_method: int,
+    calculation_type: str,
+) -> Dict[str, Any]:
     lagna_sign = None
     try:
         asc = drik.ascendant(jd, place_obj)
@@ -34,7 +40,7 @@ def compute_summary_card_en(jd: float, place_obj: drik.Place, chart_method: int,
     except Exception:
         pass
 
-    nak_name, pada, _nak_raw = _nakshatra_from_drik(jd, place_obj)
+    nak_name, pada, _ = _nakshatra_from_drik(jd, place_obj)
 
     out: Dict[str, Any] = {
         "weekday": _weekday_from_jd(jd),

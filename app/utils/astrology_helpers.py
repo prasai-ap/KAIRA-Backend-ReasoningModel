@@ -1,20 +1,31 @@
-import re
-from typing import Any, Dict, List, Optional, Tuple
+from __future__ import annotations
 
-from app.models.birth import PlaceIn, BirthInput
-from app.core.config import (
-    YOGINI_LORD_ID_TO_YOGINI_NAME,
-    DASHA_PLANET_ID_TO_NAME,
+from typing import Any, Dict, List, Optional, Tuple
+import re
+
+from jhora import const, utils
+from jhora.panchanga import drik
+
+from app.core.astrology_config import (
     AYANAMSA_MODE,
+    DASHA_PLANET_ID_TO_NAME,
+    YOGINI_LORD_ID_TO_YOGINI_NAME,
     WEEKDAY_EN,
     NAKSHATRA_EN,
     TITHI_NAMES_SHUKLA,
     TITHI_NAMES_KRISHNA,
     RASI_INDEX_TO_NAME,
 )
+from app.models.astrology_models import PlaceIn, BirthInput
 
-from jhora import utils, const
-from jhora.panchanga import drik
+
+def _planet_name(pid: int) -> str:
+    return DASHA_PLANET_ID_TO_NAME.get(int(pid), str(pid))
+
+
+def _yogini_name_from_lord_id(pid: int) -> str:
+    return YOGINI_LORD_ID_TO_YOGINI_NAME.get(int(pid), _planet_name(int(pid)))
+
 
 def _validate_jd(jd: float) -> None:
     if jd < 625000.5 or jd > 2818000.5:
@@ -23,17 +34,11 @@ def _validate_jd(jd: float) -> None:
 
 def set_ayanamsa_mode_safe(jd: float) -> None:
     _validate_jd(jd)
-
     mode = str(AYANAMSA_MODE).upper()
     available = {k.upper() for k in const.available_ayanamsa_modes.keys()}
     if mode not in available:
         raise RuntimeError(f"Ayanamsa mode {mode} not available. Available: {sorted(available)}")
-
     drik.set_ayanamsa_mode(mode, jd=jd)
-
-
-def _house_from_lagna(lagna_rasi_index: int, planet_rasi_index: int) -> int:
-    return ((int(planet_rasi_index) - int(lagna_rasi_index)) % 12) + 1
 
 
 def place_to_tuple(p: PlaceIn) -> Tuple[str, float, float, float]:
@@ -50,6 +55,11 @@ def jd_from_birth(b: BirthInput) -> float:
     return utils.julian_day_number(dob, tob)
 
 
+def _set_end_times(items: List[Dict[str, Any]]) -> None:
+    for i in range(len(items)):
+        items[i]["end"] = items[i + 1].get("start") if i < len(items) - 1 else None
+
+
 def _html_to_text(s: Any) -> str:
     if s is None:
         return ""
@@ -58,6 +68,27 @@ def _html_to_text(s: Any) -> str:
     s = re.sub(r"</?html>", "", s, flags=re.IGNORECASE)
     s = re.sub(r"<[^>]+>", "", s)
     return s.strip()
+
+
+def _fill_last_end_from_parent(items: List[Dict[str, Any]], parent_end: Optional[str]) -> None:
+    if not items:
+        return
+    if items[-1].get("end") is None and parent_end:
+        items[-1]["end"] = parent_end
+
+
+def _ensure_nested_dasha_end_dates(tree: Dict[str, Any]) -> None:
+    mahadashas = tree.get("mahadashas") or []
+    for maha in mahadashas:
+        antar_list = maha.get("antardashas") or []
+        _fill_last_end_from_parent(antar_list, maha.get("end"))
+        for antar in antar_list:
+            praty_list = antar.get("pratyantardashas") or []
+            _fill_last_end_from_parent(praty_list, antar.get("end"))
+
+
+def _house_from_lagna(lagna_rasi_index: int, planet_rasi_index: int) -> int:
+    return ((int(planet_rasi_index) - int(lagna_rasi_index)) % 12) + 1
 
 
 def strip_nulls(obj: Any) -> Any:
@@ -120,7 +151,6 @@ def _tithi_from_drik(jd: float, place_obj: drik.Place) -> Optional[Dict[str, Any
     if isinstance(t, (list, tuple)) and len(t) > 0 and isinstance(t[0], (int, float)):
         tno = int(t[0])
         info["tithi_no"] = tno
-
         if 1 <= tno <= 15:
             info["paksha"] = "Shukla"
             info["name"] = f"Shukla {TITHI_NAMES_SHUKLA[tno - 1]}"
@@ -151,12 +181,7 @@ def _nakshatra_from_drik(jd: float, place_obj: drik.Place) -> Tuple[Optional[str
     except Exception:
         return (None, None, None)
 
-    if (
-        isinstance(nk, (list, tuple))
-        and len(nk) >= 2
-        and isinstance(nk[0], (int, float))
-        and isinstance(nk[1], (int, float))
-    ):
+    if isinstance(nk, (list, tuple)) and len(nk) >= 2 and isinstance(nk[0], (int, float)) and isinstance(nk[1], (int, float)):
         nak_no = int(nk[0])
         pada = int(nk[1])
         name = NAKSHATRA_EN[nak_no - 1] if 1 <= nak_no <= 27 else None
