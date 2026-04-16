@@ -1,7 +1,7 @@
 from typing import Any, Dict
 from fastapi import APIRouter, HTTPException
 
-from app.models.astrology_models import BirthInput
+from app.models.schemas.astrology_schemas import BirthInput
 from app.core.astrology_config import AYANAMSA_MODE
 from app.utils.astrology_helpers import jd_from_birth, set_ayanamsa_mode_safe, place_to_tuple, place_to_obj
 from app.services.chart_service import compute_chart

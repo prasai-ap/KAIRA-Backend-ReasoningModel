@@ -16,7 +16,7 @@ from app.core.astrology_config import (
     TITHI_NAMES_KRISHNA,
     RASI_INDEX_TO_NAME,
 )
-from app.models.astrology_models import PlaceIn, BirthInput
+from app.models.schemas.astrology_schemas import PlaceIn, BirthInput
 
 
 def _planet_name(pid: int) -> str:
