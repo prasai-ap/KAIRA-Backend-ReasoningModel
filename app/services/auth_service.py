@@ -173,3 +173,40 @@ def logout_user(db: Session, refresh_token: str):
     revoke_refresh_session(db, session)
     
     return {"message": "Logged out successfully"}
+
+def refresh_tokens(db: Session, refresh_token: str):
+    token_hash = hash_value(refresh_token)
+    session = get_refresh_session_by_token_hash(db, token_hash)
+
+    if not session:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+    if session.expires_at < datetime.now(timezone.utc):
+        raise HTTPException(status_code=401, detail="Refresh token expired")
+
+    user = session.user if hasattr(session, "user") else None
+    if not user:
+        from app.db.user_repository import get_user_by_id
+        user = get_user_by_id(db, str(session.user_id))
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    revoke_refresh_session(db, session)
+
+    access_token = create_access_token({"sub": str(user.id), "email": user.email})
+    new_refresh_token = create_refresh_token({"sub": str(user.id), "email": user.email})
+
+    create_refresh_session(
+        db,
+        user_id=user.id,
+        refresh_token_hash=hash_value(new_refresh_token),
+        expires_at=datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
+        created_at=datetime.now(timezone.utc),
+    )
+
+    return {
+        "access_token": access_token,
+        "refresh_token": new_refresh_token,
+        "token_type": "bearer",
+    }
