@@ -11,10 +11,10 @@ def create_otp_record(db: Session, **kwargs):
     return otp_record
 
 
-def get_latest_otp(db: Session, email: str):
+def get_latest_otp(db: Session, email: str, purpose: str):
     return (
         db.query(OTPCode)
-        .filter(OTPCode.email == email)
+        .filter(OTPCode.email == email, OTPCode.purpose == purpose)
         .order_by(OTPCode.created_at.desc())
         .first()
     )
