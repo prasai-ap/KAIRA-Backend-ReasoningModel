@@ -1,12 +1,21 @@
-from typing import Optional
 from pydantic import BaseModel, EmailStr
 
 
-class SendOTPRequest(BaseModel):
+class RegisterRequest(BaseModel):
+    full_name: str
     email: EmailStr
 
 
-class VerifyOTPRequest(BaseModel):
+class RegisterVerifyOTPRequest(BaseModel):
+    email: EmailStr
+    otp: str
+
+
+class LoginSendOTPRequest(BaseModel):
+    email: EmailStr
+
+
+class LoginVerifyOTPRequest(BaseModel):
     email: EmailStr
     otp: str
 
@@ -15,18 +24,7 @@ class GoogleLoginRequest(BaseModel):
     token: str
 
 
-class RefreshTokenRequest(BaseModel):
-    refresh_token: str
-
-
 class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
-
-
-class UserResponse(BaseModel):
-    id: str
-    email: EmailStr
-    full_name: Optional[str] = None
-    is_email_verified: bool
