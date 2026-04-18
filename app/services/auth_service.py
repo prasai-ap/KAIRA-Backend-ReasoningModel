@@ -12,6 +12,9 @@ from app.db.otp_repository import (
     create_otp_record,
     get_latest_otp,
     mark_otp_used,
+    create_refresh_session,
+    get_refresh_session_by_token_hash,
+    revoke_refresh_session,
 )
 from app.db.session_repository import create_refresh_session
 from app.services.otp_service import generate_otp, build_otp_data
@@ -125,3 +128,14 @@ def verify_login_otp(db: Session, email: str, otp: str):
     mark_otp_used(db, otp_record)
 
     return _issue_tokens(db, user)
+
+    def logout_user(db: Session, refresh_token: str):
+    token_hash = hash_value(refresh_token)
+    session = get_refresh_session_by_token_hash(db, token_hash)
+
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found or already logged out")
+
+    revoke_refresh_session(db, session)
+
+    return {"message": "Logged out successfully"}
