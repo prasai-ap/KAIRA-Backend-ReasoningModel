@@ -168,7 +168,8 @@ def logout_user(db: Session, refresh_token: str):
     token_hash = hash_value(refresh_token)
     session = get_refresh_session_by_token_hash(db, token_hash)
     if not session:
-        raise HTTPException(status_code=404, detail="Session not found or already logged out")
-        revoke_refresh_session(db, session)
+        raise HTTPException(status_code=400, detail="Session not found or already logged out")
+    
+    revoke_refresh_session(db, session)
     
     return {"message": "Logged out successfully"}
