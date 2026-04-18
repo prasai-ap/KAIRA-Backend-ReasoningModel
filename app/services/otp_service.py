@@ -9,12 +9,12 @@ def generate_otp() -> str:
     return str(random.randint(100000, 999999))
 
 
-def build_otp_data(email: str, otp: str) -> dict:
+def build_otp_data(email: str, otp: str, purpose: str) -> dict:
     now = datetime.now(timezone.utc)
     return {
         "email": email,
         "otp_hash": hash_value(otp),
-        "purpose": "login",
+        "purpose": purpose,
         "expires_at": now + timedelta(minutes=OTP_EXPIRE_MINUTES),
         "used": False,
         "attempt_count": 0,
