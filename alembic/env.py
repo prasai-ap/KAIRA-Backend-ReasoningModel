@@ -28,6 +28,7 @@ from app.core.database import Base
 from app.models.user_models import User
 from app.models.otp_models import OTPCode
 from app.models.session_models import RefreshSession
+from app.models.user_astrology_models import UserAstrologyData
 
 target_metadata = Base.metadata
 
