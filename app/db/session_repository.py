@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 
 from app.models.session_models import RefreshSession
@@ -24,6 +25,39 @@ def get_refresh_session_by_token_hash(db: Session, token_hash: str):
 
 def revoke_refresh_session(db: Session, session: RefreshSession):
     session.is_revoked = True
+    session.revoked_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(session)
     return session
+
+
+def cleanup_old_revoked_sessions(db: Session, days: int = 7):
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+
+    deleted_count = (
+        db.query(RefreshSession)
+        .filter(
+            RefreshSession.is_revoked == True,
+            RefreshSession.revoked_at.isnot(None),
+            RefreshSession.revoked_at < cutoff,
+        )
+        .delete(synchronize_session=False)
+    )
+
+    db.commit()
+    return deleted_count
+
+
+def cleanup_expired_sessions(db: Session, days: int = 7):
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+
+    deleted_count = (
+        db.query(RefreshSession)
+        .filter(
+            RefreshSession.expires_at < cutoff,
+        )
+        .delete(synchronize_session=False)
+    )
+
+    db.commit()
+    return deleted_count
