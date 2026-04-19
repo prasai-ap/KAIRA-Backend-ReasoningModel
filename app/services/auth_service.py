@@ -7,6 +7,8 @@ from app.db.user_repository import (
     get_user_by_email,
     create_user,
     update_last_login,
+    get_user_by_google_sub,
+    get_user_by_id,
 )
 from app.db.otp_repository import (
     create_otp_record,
@@ -20,12 +22,9 @@ from app.db.session_repository import (
 )
 from app.services.otp_service import generate_otp, build_otp_data
 from app.services.jwt_service import create_access_token, create_refresh_token
+from app.services.google_auth_service import verify_google_token
 from app.utils.email_utils import send_otp_email
 from app.core.auth_config import REFRESH_TOKEN_EXPIRE_DAYS
-
-from app.db.user_repository import get_user_by_google_sub
-from app.services.google_auth_service import verify_google_token
-
 
 
 def _issue_tokens(db: Session, user):
@@ -40,6 +39,8 @@ def _issue_tokens(db: Session, user):
         refresh_token_hash=hash_value(refresh_token),
         expires_at=datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
         created_at=datetime.now(timezone.utc),
+        is_revoked=False,
+        revoked_at=None,
     )
 
     return {
@@ -47,7 +48,6 @@ def _issue_tokens(db: Session, user):
         "refresh_token": refresh_token,
         "token_type": "bearer",
     }
-
 
 
 def register_user(db: Session, full_name: str, email: str):
@@ -66,8 +66,7 @@ def register_user(db: Session, full_name: str, email: str):
     otp_data = build_otp_data(email, otp, purpose="register")
 
     create_otp_record(db, **otp_data)
-    print("REGISTER OTP:", otp) 
-
+    print("REGISTER OTP:", otp)
     send_otp_email(email, otp)
 
     return {"message": "User registered. OTP sent."}
@@ -94,7 +93,6 @@ def verify_register_otp(db: Session, email: str, otp: str):
     return _issue_tokens(db, user)
 
 
-
 def send_login_otp(db: Session, email: str):
     user = get_user_by_email(db, email)
 
@@ -105,8 +103,7 @@ def send_login_otp(db: Session, email: str):
     otp_data = build_otp_data(email, otp, purpose="login")
 
     create_otp_record(db, **otp_data)
-    print("LOGIN OTP:", otp)  # for testing
-
+    print("LOGIN OTP:", otp)
     send_otp_email(email, otp)
 
     return {"message": "OTP sent"}
@@ -132,6 +129,7 @@ def verify_login_otp(db: Session, email: str, otp: str):
     mark_otp_used(db, otp_record)
 
     return _issue_tokens(db, user)
+
 
 def login_with_google(db: Session, token: str):
     info = verify_google_token(token)
@@ -164,15 +162,6 @@ def login_with_google(db: Session, token: str):
 
     return _issue_tokens(db, user)
 
-def logout_user(db: Session, refresh_token: str):
-    token_hash = hash_value(refresh_token)
-    session = get_refresh_session_by_token_hash(db, token_hash)
-    if not session:
-        raise HTTPException(status_code=400, detail="Session not found or already logged out")
-    
-    revoke_refresh_session(db, session)
-    
-    return {"message": "Logged out successfully"}
 
 def refresh_tokens(db: Session, refresh_token: str):
     token_hash = hash_value(refresh_token)
@@ -184,14 +173,11 @@ def refresh_tokens(db: Session, refresh_token: str):
     if session.expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=401, detail="Refresh token expired")
 
-    user = session.user if hasattr(session, "user") else None
-    if not user:
-        from app.db.user_repository import get_user_by_id
-        user = get_user_by_id(db, str(session.user_id))
-
+    user = get_user_by_id(db, str(session.user_id))
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    # rotate refresh token: revoke old, issue new
     revoke_refresh_session(db, session)
 
     access_token = create_access_token({"sub": str(user.id), "email": user.email})
@@ -203,6 +189,8 @@ def refresh_tokens(db: Session, refresh_token: str):
         refresh_token_hash=hash_value(new_refresh_token),
         expires_at=datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
         created_at=datetime.now(timezone.utc),
+        is_revoked=False,
+        revoked_at=None,
     )
 
     return {
@@ -210,3 +198,15 @@ def refresh_tokens(db: Session, refresh_token: str):
         "refresh_token": new_refresh_token,
         "token_type": "bearer",
     }
+
+
+def logout_user(db: Session, refresh_token: str):
+    token_hash = hash_value(refresh_token)
+    session = get_refresh_session_by_token_hash(db, token_hash)
+
+    if not session:
+        raise HTTPException(status_code=400, detail="Session not found or already logged out")
+
+    revoke_refresh_session(db, session)
+
+    return {"message": "Logged out successfully"}
