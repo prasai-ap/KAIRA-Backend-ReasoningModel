@@ -17,11 +17,9 @@ from app.services.auth_service import (
     send_login_otp,
     verify_login_otp,
     login_with_google,
+    refresh_tokens,
     logout_user,
 )
-
-from app.models.schemas.auth_schemas import RefreshTokenRequest
-from app.services.auth_service import refresh_tokens
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -51,10 +49,11 @@ def google_login_route(payload: GoogleLoginRequest, db: Session = Depends(get_db
     return login_with_google(db, payload.token)
 
 
-@router.post("/logout")
-def logout(payload: RefreshTokenRequest, db: Session = Depends(get_db)):
-    return logout_user(db, payload.refresh_token)
-
 @router.post("/refresh", response_model=TokenResponse)
 def refresh_token_route(payload: RefreshTokenRequest, db: Session = Depends(get_db)):
     return refresh_tokens(db, payload.refresh_token)
+
+
+@router.post("/logout")
+def logout(payload: RefreshTokenRequest, db: Session = Depends(get_db)):
+    return logout_user(db, payload.refresh_token)
