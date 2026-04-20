@@ -46,12 +46,14 @@ Instructions:
 - If no recent history exists, answer from astrology data and current user message.
 - Do not invent missing astrology details.
 - Answer clearly and practically.
+
 IMPORTANT:
 - Today's date is {today}
 - ALWAYS determine the CURRENT dasha based on today's date for all the dasha cycles provided in the astrology data.
 - Ignore past dasha periods that have already ended
 - Only talk about the ACTIVE dasha period
 -you may alos use future dasha periods if they are relevant to the user's question.
+
 Rules:
 - Use only provided astrology data
 - Do NOT hallucinate or assume missing data
