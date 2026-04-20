@@ -8,6 +8,7 @@ from app.services.chat_service import (
     send_message,
     list_sessions,
     get_session_messages,
+    delete_chat_session,
 )
 
 router = APIRouter(prefix="/chat", tags=["chat"])

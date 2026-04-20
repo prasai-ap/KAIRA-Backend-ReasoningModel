@@ -9,6 +9,7 @@ from app.db.chat_repository import (
     update_session_time,
     update_session_title,
     get_recent_messages,
+    delete_session,
 )
 from app.db.user_astrology_repository import get_user_astrology
 from app.services.ai_service import generate_ai_response
