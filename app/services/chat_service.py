@@ -14,8 +14,6 @@ from app.db.user_astrology_repository import get_user_astrology
 from app.services.ai_service import generate_ai_response
 from datetime import datetime
 
-history = get_recent_messages(db, session.id, user.id, days=30, limit=12)
-
 def build_prompt(astrology, history, user_message):
     astrology_text = f"""
 User Astrology Profile:
@@ -70,7 +68,7 @@ def send_message(db, user, message, session_id=None):
 
     add_message(db, session.id, user.id, "user", message)
 
-    history = get_messages(db, session.id, user.id)
+    history = get_recent_messages(db, session.id, user.id, days=30, limit=12)
     astrology = get_user_astrology(db, user.id)
 
     prompt = build_prompt(astrology, history, message)
