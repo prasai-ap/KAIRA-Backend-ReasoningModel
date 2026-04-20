@@ -126,3 +126,13 @@ def get_session_messages(db, user, session_id):
         }
         for m in msgs
     ]
+
+def delete_chat_session(db, user, session_id: str):
+    session = get_session(db, session_id, user.id)
+
+    if not session:
+        raise HTTPException(status_code=404, detail="Chat session not found")
+
+    delete_session(db, session)
+
+    return {"message": "Chat deleted successfully"}
