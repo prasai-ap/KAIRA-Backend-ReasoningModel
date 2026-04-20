@@ -61,3 +61,18 @@ def cleanup_expired_sessions(db: Session, days: int = 7):
 
     db.commit()
     return deleted_count
+
+def get_recent_messages(db: Session, session_id, user_id, days: int = 30, limit: int = 12):
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+
+    return (
+        db.query(ChatMessage)
+        .filter(
+            ChatMessage.session_id == session_id,
+            ChatMessage.user_id == user_id,
+            ChatMessage.created_at >= cutoff,
+        )
+        .order_by(ChatMessage.created_at.desc())
+        .limit(limit)
+        .all()[::-1]
+    )
