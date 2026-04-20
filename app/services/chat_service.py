@@ -11,10 +11,13 @@ from app.db.chat_repository import (
 )
 from app.db.user_astrology_repository import get_user_astrology
 from app.services.ai_service import generate_ai_response
+from datetime import datetime
 
 
 def build_prompt(astrology, history, user_message):
-
+    
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    
     astrology_text = ""
     if astrology:
         astrology_text = f"""
@@ -41,12 +44,24 @@ Dosha:
     return f"""
 You are an expert Vedic astrology AI assistant.
 
+
 Instructions:
 - Use only the provided astrology data and prior conversation.
 - Do not invent missing astrology data.
 - Explain clearly in simple language.
 - Be practical and user-friendly.
 - If something is not available in the stored data, say that clearly.
+
+IMPORTANT:
+- Today's date is {today}
+- ALWAYS determine the CURRENT dasha based on today's date
+- Ignore past dasha periods that have already ended
+- Only talk about the ACTIVE dasha period
+
+Rules:
+- Use only provided astrology data
+- Do NOT hallucinate or assume missing data
+- If data is insufficient, say clearly
 
 {astrology_text}
 
