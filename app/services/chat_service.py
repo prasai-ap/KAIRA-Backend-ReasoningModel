@@ -8,19 +8,16 @@ from app.db.chat_repository import (
     get_messages,
     update_session_time,
     update_session_title,
+    get_recent_messages,
 )
 from app.db.user_astrology_repository import get_user_astrology
 from app.services.ai_service import generate_ai_response
 from datetime import datetime
 
+history = get_recent_messages(db, session.id, user.id, days=30, limit=12)
 
 def build_prompt(astrology, history, user_message):
-    
-    today = datetime.utcnow().strftime("%Y-%m-%d")
-    
-    astrology_text = ""
-    if astrology:
-        astrology_text = f"""
+    astrology_text = f"""
 User Astrology Profile:
 Charts:
 {astrology.charts}
@@ -34,38 +31,27 @@ Yoga:
 Dosha:
 {astrology.dosha}
 """
-    history_text = ""
+
     if history:
         history_text = "\n".join(
-            [f"{m.role.upper()}: {m.content}" for m in history[-10:]]
+            [f"{m.role.upper()}: {m.content}" for m in history]
         )
     else:
-        history_text = "No previous chat history. This is the first interaction."
+        history_text = "No recent chat history in the last 30 days."
+
     return f"""
 You are an expert Vedic astrology AI assistant.
 
-
 Instructions:
-- Use only the provided astrology data and prior conversation.
-- Do not invent missing astrology data.
-- Explain clearly in simple language.
-- Be practical and user-friendly.
-- If something is not available in the stored data, say that clearly.
-
-IMPORTANT:
-- Today's date is {today}
-- ALWAYS determine the CURRENT dasha based on today's date
-- Ignore past dasha periods that have already ended
-- Only talk about the ACTIVE dasha period
-
-Rules:
-- Use only provided astrology data
-- Do NOT hallucinate or assume missing data
-- If data is insufficient, say clearly
+- Use the astrology data as authoritative.
+- Use recent conversation history if available.
+- If no recent history exists, answer from astrology data and current user message.
+- Do not invent missing astrology details.
+- Answer clearly and practically.
 
 {astrology_text}
 
-Conversation history:
+Recent conversation history (last 30 days only):
 {history_text}
 
 Latest user message:
@@ -73,7 +59,6 @@ USER: {user_message}
 
 ASSISTANT:
 """.strip()
-
 
 def send_message(db, user, message, session_id=None):
     if session_id:
