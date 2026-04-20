@@ -37,3 +37,11 @@ def messages(
     user=Depends(get_current_user),
 ):
     return get_session_messages(db, user, session_id)
+
+@router.delete("/sessions/{session_id}")
+def delete_chat(
+    session_id: str,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    return delete_chat_session(db, user, session_id)
