@@ -79,3 +79,7 @@ def get_recent_messages(db: Session, session_id, user_id, days: int = 30, limit:
         .limit(limit)
         .all()[::-1]
     )
+
+def delete_session(db: Session, session: ChatSession):
+    db.delete(session)
+    db.commit()
