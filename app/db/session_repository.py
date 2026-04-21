@@ -30,6 +30,24 @@ def revoke_refresh_session(db: Session, session: RefreshSession):
     db.refresh(session)
     return session
 
+def revoke_all_user_sessions(db: Session, user_id):
+    sessions = (
+        db.query(RefreshSession)
+        .filter(
+            RefreshSession.user_id == user_id,
+            RefreshSession.is_revoked == False,
+        )
+        .all()
+    )
+
+    now = datetime.now(timezone.utc)
+    for session in sessions:
+        session.is_revoked = True
+        session.revoked_at = now
+
+    db.commit()
+    return len(sessions)
+
 
 def cleanup_old_revoked_sessions(db: Session, days: int = 7):
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
