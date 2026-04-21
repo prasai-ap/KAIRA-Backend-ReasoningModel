@@ -19,6 +19,7 @@ from app.db.session_repository import (
     create_refresh_session,
     get_refresh_session_by_token_hash,
     revoke_refresh_session,
+    revoke_all_user_sessions,
 )
 from app.services.otp_service import generate_otp, build_otp_data
 from app.services.jwt_service import create_access_token, create_refresh_token
@@ -177,7 +178,6 @@ def refresh_tokens(db: Session, refresh_token: str):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # rotate refresh token: revoke old, issue new
     revoke_refresh_session(db, session)
 
     access_token = create_access_token({"sub": str(user.id), "email": user.email})
@@ -207,6 +207,9 @@ def logout_user(db: Session, refresh_token: str):
     if not session:
         raise HTTPException(status_code=400, detail="Session not found or already logged out")
 
-    revoke_refresh_session(db, session)
+    revoked_count = revoke_all_user_sessions(db, session.user_id)
 
-    return {"message": "Logged out successfully"}
+    return {
+        "message": "Logged out Successfully",
+        "revoked_sessions": revoked_count,
+    }
