@@ -9,7 +9,7 @@ from app.api.chat_routes import router as chat_router
 from app.models.chat_models import ChatSession, ChatMessage
 
 from app.core.database import SessionLocal
-from app.db.session_repository import cleanup_old_revoked_sessions, cleanup_expired_sessions
+from app.db.session_repository import cleanup_revoked_sessions, cleanup_expired_sessions
 
 app = FastAPI()
 
@@ -21,7 +21,7 @@ app.include_router(chat_router)
 def cleanup_sessions_on_startup():
     db = SessionLocal()
     try:
-        cleanup_old_revoked_sessions(db,days=7)
+        cleanup_revoked_sessions(db)
         cleanup_expired_sessions(db,days=7)
     finally:
         db.close()

@@ -49,16 +49,10 @@ def revoke_all_user_sessions(db: Session, user_id):
     return len(sessions)
 
 
-def cleanup_old_revoked_sessions(db: Session, days: int = 7):
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
-
+def cleanup_revoked_sessions(db: Session):
     deleted_count = (
         db.query(RefreshSession)
-        .filter(
-            RefreshSession.is_revoked == True,
-            RefreshSession.revoked_at.isnot(None),
-            RefreshSession.revoked_at < cutoff,
-        )
+        .filter(RefreshSession.is_revoked == True)
         .delete(synchronize_session=False)
     )
 
