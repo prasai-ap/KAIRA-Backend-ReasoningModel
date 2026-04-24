@@ -13,9 +13,10 @@ from app.db.chat_repository import (
 )
 from app.db.user_astrology_repository import get_user_astrology
 from app.services.ai_service import generate_ai_response
-from datetime import datetime
+from datetime import datetime, timezone
 
 def build_prompt(astrology, history, user_message):
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     astrology_text = f"""
 User Astrology Profile:
 Charts:
