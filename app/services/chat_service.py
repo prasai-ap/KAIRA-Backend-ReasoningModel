@@ -73,22 +73,36 @@ ASSISTANT:
 """.strip()
 
 def send_message(db, user, message, session_id=None):
+    astrology = get_user_astrology(db, user.id)
+    if not astrology:
+        raise HTTPException(
+            status_code=400,
+            detail="Astrology data not found for user. Please generate astrology data first.",
+        )
+
     if session_id:
         session = get_session(db, session_id, user.id)
         if not session:
             raise HTTPException(status_code=404, detail="Chat session not found")
+
+        history = get_recent_messages(db, session.id, user.id, days=30, limit=12)
     else:
+        session = None
+        history = []
+
+    prompt = build_prompt(astrology, history, message)
+
+    try:
+        reply = generate_ai_response(prompt)
+    except Exception:
+        reply = "Sorry, I could not generate a response right now. Please try again."
+
+    if session is None:
         session = create_session(db, user.id, message[:40])
 
     add_message(db, session.id, user.id, "user", message)
-
-    history = get_recent_messages(db, session.id, user.id, days=30, limit=12)
-    astrology = get_user_astrology(db, user.id)
-
-    prompt = build_prompt(astrology, history, message)
-    reply = generate_ai_response(prompt)
-
     add_message(db, session.id, user.id, "assistant", reply)
+
     update_session_time(db, session)
 
     if not session.title or session.title == "New Chat":
