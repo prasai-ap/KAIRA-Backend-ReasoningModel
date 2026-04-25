@@ -10,6 +10,7 @@ from app.models.chat_models import ChatSession, ChatMessage
 
 from app.core.database import SessionLocal
 from app.db.session_repository import cleanup_revoked_sessions, cleanup_expired_sessions
+from app.db.otp_repository import cleanup_otps
 
 app = FastAPI()
 
@@ -23,5 +24,6 @@ def cleanup_sessions_on_startup():
     try:
         cleanup_revoked_sessions(db)
         cleanup_expired_sessions(db,days=7)
+        cleanup_otps(db)
     finally:
         db.close()

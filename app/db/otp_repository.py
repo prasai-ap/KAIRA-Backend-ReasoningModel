@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.models.otp_models import OTPCode
+from datetime import datetime, timezone
 
 
 def create_otp_record(db: Session, **kwargs):

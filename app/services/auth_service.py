@@ -14,6 +14,8 @@ from app.db.otp_repository import (
     create_otp_record,
     get_latest_otp,
     mark_otp_used,
+    increment_attempt_count,
+    cleanup_otps,
 )
 from app.db.session_repository import (
     create_refresh_session,
@@ -50,6 +52,36 @@ def _issue_tokens(db: Session, user):
         "token_type": "bearer",
     }
 
+MAX_OTP_ATTEMPTS = 5
+
+def _verify_otp_or_raise(db: Session, otp_record, otp: str):
+    if not otp_record or otp_record.used:
+        raise HTTPException(status_code=400, detail="Invalid OTP")
+
+    if otp_record.expires_at < datetime.now(timezone.utc):
+        cleanup_otps(db)
+        raise HTTPException(status_code=400, detail="OTP expired")
+
+    if otp_record.attempt_count >= MAX_OTP_ATTEMPTS:
+        raise HTTPException(
+            status_code=400,
+            detail="Maximum OTP attempts exceeded. Please request a new OTP.",
+        )
+
+    if not verify_hash(otp, otp_record.otp_hash):
+        otp_record = increment_attempt_count(db, otp_record)
+        remaining = MAX_OTP_ATTEMPTS - otp_record.attempt_count
+
+        if remaining <= 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Maximum OTP attempts exceeded. Please request a new OTP.",
+            )
+
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid OTP. Attempts left: {remaining}",
+        )
 
 def register_user(db: Session, full_name: str, email: str):
     existing_user = get_user_by_email(db, email)
@@ -80,16 +112,10 @@ def verify_register_otp(db: Session, email: str, otp: str):
 
     otp_record = get_latest_otp(db, email, "register")
 
-    if not otp_record or otp_record.used:
-        raise HTTPException(status_code=400, detail="Invalid OTP")
-
-    if otp_record.expires_at < datetime.now(timezone.utc):
-        raise HTTPException(status_code=400, detail="OTP expired")
-
-    if not verify_hash(otp, otp_record.otp_hash):
-        raise HTTPException(status_code=400, detail="Invalid OTP")
+    _verify_otp_or_raise(db, otp_record, otp)
 
     mark_otp_used(db, otp_record)
+    cleanup_otps(db)
 
     return _issue_tokens(db, user)
 
@@ -118,19 +144,12 @@ def verify_login_otp(db: Session, email: str, otp: str):
 
     otp_record = get_latest_otp(db, email, "login")
 
-    if not otp_record or otp_record.used:
-        raise HTTPException(status_code=400, detail="Invalid OTP")
-
-    if otp_record.expires_at < datetime.now(timezone.utc):
-        raise HTTPException(status_code=400, detail="OTP expired")
-
-    if not verify_hash(otp, otp_record.otp_hash):
-        raise HTTPException(status_code=400, detail="Invalid OTP")
+    _verify_otp_or_raise(db, otp_record, otp)
 
     mark_otp_used(db, otp_record)
+    cleanup_otps(db)
 
     return _issue_tokens(db, user)
-
 
 def login_with_google(db: Session, token: str):
     info = verify_google_token(token)
