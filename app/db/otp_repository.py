@@ -32,3 +32,35 @@ def increment_attempt_count(db: Session, otp_record: OTPCode):
     db.commit()
     db.refresh(otp_record)
     return otp_record
+
+
+def delete_used_otps(db: Session):
+    count = (
+        db.query(OTPCode)
+        .filter(OTPCode.used == True)
+        .delete(synchronize_session=False)
+    )
+    db.commit()
+    return count
+
+
+def delete_expired_otps(db: Session):
+    now = datetime.now(timezone.utc)
+
+    count = (
+        db.query(OTPCode)
+        .filter(OTPCode.expires_at < now)
+        .delete(synchronize_session=False)
+    )
+    db.commit()
+    return count
+
+
+def cleanup_otps(db: Session):
+    used_count = delete_used_otps(db)
+    expired_count = delete_expired_otps(db)
+
+    return {
+        "used_deleted": used_count,
+        "expired_deleted": expired_count,
+    }
