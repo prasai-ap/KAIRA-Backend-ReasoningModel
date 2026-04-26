@@ -18,6 +18,7 @@ from app.services.auth_service import (
     refresh_tokens,
     logout_user,
 )
+from app.core.security import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -132,3 +133,10 @@ def logout(
 
     clear_refresh_cookie(response)
     return result
+
+@router.get("/me")
+def get_me(user=Depends(get_current_user)):
+    return {
+        "email": user.email,
+        "full_name": user.full_name,
+    }
