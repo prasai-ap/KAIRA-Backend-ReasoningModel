@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from app.db.user_astrology_repository import (
     get_user_astrology,
     create_user_astrology,
@@ -31,6 +33,45 @@ DIVISIONAL_CHARTS = {
     "D45": 45,
     "D60": 60,
 }
+
+
+def calculate_age_from_input(input_data):
+    today = datetime.now(timezone.utc)
+
+    birth_year = int(input_data["year"])
+    birth_month = int(input_data["month"])
+    birth_day = int(input_data["day"])
+
+    age = today.year - birth_year
+
+    if (today.month, today.day) < (birth_month, birth_day):
+        age -= 1
+
+    return age
+
+
+def get_moon_rashi_from_charts(charts):
+    d1 = charts.get("D1", {})
+    positions = d1.get("positions", [])
+
+    for item in positions:
+        if item.get("planet") == "Moon":
+            return item.get("rasi")
+
+    return None
+
+
+def inject_dynamic_age(data):
+    age = calculate_age_from_input(data["input_data"])
+
+    if isinstance(data.get("charts"), dict):
+        summary_card = data["charts"].get("summary_card")
+
+        if isinstance(summary_card, dict):
+            summary_card["current_age"] = age
+            summary_card["age_as_of_date"] = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    return data
 
 
 def compute_all_charts(jd, place_obj, chart_method, calculation_type):
@@ -67,6 +108,12 @@ def build_charts_result(jd, place_obj, place_tuple, birth_input):
         birth_input.chart_method,
         birth_input.calculation_type,
     )
+
+    moon_rashi = get_moon_rashi_from_charts(charts)
+
+    if isinstance(summary_card, dict):
+        summary_card["moon_rashi"] = moon_rashi
+        summary_card["horoscope"] = moon_rashi
 
     return {
         "meta": {
@@ -160,7 +207,7 @@ def generate_or_get_user_astrology(db, user, birth_input):
     existing = get_user_astrology(db, user.id)
 
     if existing:
-        return {
+        data = {
             "source": "database",
             "meta": {
                 "user_id": str(user.id),
@@ -171,6 +218,8 @@ def generate_or_get_user_astrology(db, user, birth_input):
             "yoga": existing.yoga,
             "dosha": existing.dosha,
         }
+
+        return inject_dynamic_age(data)
 
     payload = prepare_astrology_payload(birth_input)
 
@@ -184,7 +233,7 @@ def generate_or_get_user_astrology(db, user, birth_input):
         dosha=payload["dosha"],
     )
 
-    return {
+    data = {
         "source": "computed_and_saved",
         "meta": {
             "user_id": str(user.id),
@@ -196,6 +245,8 @@ def generate_or_get_user_astrology(db, user, birth_input):
         "dosha": saved.dosha,
     }
 
+    return inject_dynamic_age(data)
+
 
 def get_saved_user_astrology(db, user):
     existing = get_user_astrology(db, user.id)
@@ -203,7 +254,7 @@ def get_saved_user_astrology(db, user):
     if not existing:
         return None
 
-    return {
+    data = {
         "source": "database",
         "meta": {
             "user_id": str(user.id),
@@ -214,6 +265,8 @@ def get_saved_user_astrology(db, user):
         "yoga": existing.yoga,
         "dosha": existing.dosha,
     }
+
+    return inject_dynamic_age(data)
 
 
 def regenerate_user_astrology(db, user, birth_input):
@@ -231,7 +284,7 @@ def regenerate_user_astrology(db, user, birth_input):
             dosha=payload["dosha"],
         )
 
-        return {
+        data = {
             "source": "recomputed_and_updated",
             "meta": {
                 "user_id": str(user.id),
@@ -242,5 +295,7 @@ def regenerate_user_astrology(db, user, birth_input):
             "yoga": updated.yoga,
             "dosha": updated.dosha,
         }
+
+        return inject_dynamic_age(data)
 
     return generate_or_get_user_astrology(db, user, birth_input)
