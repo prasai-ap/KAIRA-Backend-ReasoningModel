@@ -26,7 +26,7 @@ from app.db.session_repository import (
 from app.services.otp_service import generate_otp, build_otp_data
 from app.services.jwt_service import create_access_token, create_refresh_token
 from app.services.google_auth_service import verify_google_token
-from app.utils.email_utils import send_otp_email
+from app.utils.email_utils import send_register_otp_email, send_login_otp_email
 from app.core.auth_config import REFRESH_TOKEN_EXPIRE_DAYS
 
 
@@ -100,7 +100,7 @@ def register_user(db: Session, full_name: str, email: str):
 
     create_otp_record(db, **otp_data)
     print("REGISTER OTP:", otp)
-    send_otp_email(email, otp)
+    send_register_otp_email(email, otp, full_name)
 
     return {"message": "User registered. OTP sent."}
 
@@ -131,7 +131,7 @@ def send_login_otp(db: Session, email: str):
 
     create_otp_record(db, **otp_data)
     print("LOGIN OTP:", otp)
-    send_otp_email(email, otp)
+    send_login_otp_email(email, otp)
 
     return {"message": "OTP sent"}
 
