@@ -65,3 +65,19 @@ def cleanup_otps(db: Session):
         "used_deleted": used_count,
         "expired_deleted": expired_count,
     }
+
+def invalidate_old_otps(db, email: str, purpose: str):
+    old_otps = (
+        db.query(OTPCode)
+        .filter(
+            OTPCode.email == email,
+            OTPCode.purpose == purpose,
+            OTPCode.used == False,
+        )
+        .all()
+    )
+
+    for otp in old_otps:
+        otp.used = True
+
+    db.commit()
