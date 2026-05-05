@@ -8,6 +8,7 @@ from app.models.schemas.auth_schemas import (
     LoginSendOTPRequest,
     LoginVerifyOTPRequest,
     GoogleLoginRequest,
+    ResendOTPRequest,
 )
 from app.services.auth_service import (
     register_user,
@@ -17,6 +18,7 @@ from app.services.auth_service import (
     login_with_google,
     refresh_tokens,
     logout_user,
+    resend_otp,
 )
 from app.core.security import get_current_user
 
@@ -140,3 +142,7 @@ def get_me(user=Depends(get_current_user)):
         "email": user.email,
         "full_name": user.full_name,
     }
+
+@router.post("/resend-otp")
+def resend_otp_route(payload: ResendOTPRequest, db: Session = Depends(get_db)):
+    return resend_otp(db, payload.email, payload.purpose)
