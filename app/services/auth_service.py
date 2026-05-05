@@ -16,6 +16,7 @@ from app.db.otp_repository import (
     mark_otp_used,
     increment_attempt_count,
     cleanup_otps,
+    invalidate_old_otps,
 )
 from app.db.session_repository import (
     create_refresh_session,
@@ -135,6 +136,35 @@ def send_login_otp(db: Session, email: str):
 
     return {"message": "OTP sent"}
 
+def resend_otp(db: Session, email: str, purpose: str):
+    purpose = purpose.lower().strip()
+
+    if purpose not in ["register", "login"]:
+        raise HTTPException(status_code=400, detail="Invalid OTP purpose")
+
+    user = get_user_by_email(db, email)
+
+    if purpose == "login":
+        if not user:
+            raise HTTPException(status_code=404, detail="User not registered")
+
+    if purpose == "register":
+        if not user:
+            raise HTTPException(status_code=404, detail="Registration not started")
+
+    invalidate_old_otps(db, email, purpose)
+
+    otp = generate_otp()
+    otp_data = build_otp_data(email, otp, purpose=purpose)
+
+    create_otp_record(db, **otp_data)
+
+    if purpose == "register":
+        send_register_otp_email(email, otp, user.full_name)
+    else:
+        send_login_otp_email(email, otp)
+
+    return {"message": "OTP resent successfully"}
 
 def verify_login_otp(db: Session, email: str, otp: str):
     user = get_user_by_email(db, email)
