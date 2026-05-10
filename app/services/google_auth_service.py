@@ -5,7 +5,7 @@ from app.core.auth_config import GOOGLE_CLIENT_ID
 
 
 def verify_google_token(token: str):
-    info = id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_CLIENT_ID)
+    info = id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_CLIENT_ID, clock_skew_in_seconds=10,)
 
     return {
         "email": info.get("email"),
