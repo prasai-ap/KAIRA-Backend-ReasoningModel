@@ -18,6 +18,16 @@ from app.core.astrology_config import (
 )
 from app.models.schemas.astrology_schemas import PlaceIn, BirthInput
 
+def normalize_timezone(tz):
+    tz = float(tz)
+
+    hours = int(tz)
+    minutes_part = round((tz - hours) * 100)
+
+    if minutes_part in [15, 30, 45]:
+        return hours + (minutes_part / 60)
+
+    return tz
 
 def _planet_name(pid: int) -> str:
     return DASHA_PLANET_ID_TO_NAME.get(int(pid), str(pid))
