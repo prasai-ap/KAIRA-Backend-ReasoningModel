@@ -114,7 +114,8 @@ def build_charts_result(jd, place_obj, place_tuple, birth_input):
     if isinstance(summary_card, dict):
         summary_card["moon_rashi"] = moon_rashi
         summary_card["horoscope"] = moon_rashi
-
+        summary_card["gender"] = birth_input.gender
+        
     return {
         "meta": {
             "ayanamsa": AYANAMSA_MODE,
