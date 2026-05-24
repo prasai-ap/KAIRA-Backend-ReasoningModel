@@ -56,7 +56,7 @@ def place_to_tuple(p: PlaceIn) -> Tuple[str, float, float, float]:
 
 
 def place_to_obj(p: PlaceIn) -> drik.Place:
-    return drik.Place(str(p.name), float(p.latitude), float(p.longitude), float(p.timezone))
+    return drik.Place(str(p.name), float(p.latitude), float(p.longitude), normalize_timezone(p.timezone))
 
 
 def jd_from_birth(b: BirthInput) -> float:
