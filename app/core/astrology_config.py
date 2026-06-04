@@ -69,3 +69,61 @@ TITHI_NAMES_KRISHNA = [
     "Shashthi", "Saptami", "Ashtami", "Navami", "Dashami",
     "Ekadashi", "Dwadashi", "Trayodashi", "Chaturdashi", "Amavasya",
 ]
+NAKSHATRA_GANA_MAP = {
+    1: "Deva",        # Ashwini
+    2: "Manushya",    # Bharani
+    3: "Rakshasa",    # Krittika
+    4: "Manushya",    # Rohini
+    5: "Deva",        # Mrigashira
+    6: "Manushya",    # Ardra
+    7: "Deva",        # Punarvasu
+    8: "Deva",        # Pushya
+    9: "Rakshasa",    # Ashlesha
+    10: "Rakshasa",   # Magha
+    11: "Manushya",   # Purva Phalguni
+    12: "Manushya",   # Uttara Phalguni
+    13: "Deva",       # Hasta
+    14: "Rakshasa",   # Chitra
+    15: "Deva",       # Swati
+    16: "Rakshasa",   # Vishakha
+    17: "Deva",       # Anuradha
+    18: "Rakshasa",   # Jyeshtha
+    19: "Rakshasa",   # Mula
+    20: "Manushya",   # Purva Ashadha
+    21: "Manushya",   # Uttara Ashadha
+    22: "Deva",       # Shravana
+    23: "Rakshasa",   # Dhanishta
+    24: "Rakshasa",   # Shatabhisha
+    25: "Manushya",   # Purva Bhadrapada
+    26: "Manushya",   # Uttara Bhadrapada
+    27: "Deva",       # Revati
+}
+NAKSHATRA_NADI_MAP = {
+    1: "Adi",       # Ashwini
+    2: "Madhya",    # Bharani
+    3: "Antya",     # Krittika
+    4: "Antya",     # Rohini
+    5: "Madhya",    # Mrigashira
+    6: "Adi",       # Ardra
+    7: "Adi",       # Punarvasu
+    8: "Madhya",    # Pushya
+    9: "Antya",     # Ashlesha
+    10: "Antya",    # Magha
+    11: "Madhya",   # Purva Phalguni
+    12: "Adi",      # Uttara Phalguni
+    13: "Adi",      # Hasta
+    14: "Madhya",   # Chitra
+    15: "Antya",    # Swati
+    16: "Antya",    # Vishakha
+    17: "Madhya",   # Anuradha
+    18: "Adi",      # Jyeshtha
+    19: "Adi",      # Mula
+    20: "Madhya",   # Purva Ashadha
+    21: "Antya",    # Uttara Ashadha
+    22: "Antya",    # Shravana
+    23: "Madhya",   # Dhanishta
+    24: "Adi",      # Shatabhisha
+    25: "Adi",      # Purva Bhadrapada
+    26: "Madhya",   # Uttara Bhadrapada
+    27: "Antya",    # Revati
+}
