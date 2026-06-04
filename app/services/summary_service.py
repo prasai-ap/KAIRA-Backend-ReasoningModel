@@ -9,6 +9,8 @@ from app.utils.astrology_helpers import (
     _moon_rasi_from_d1_positions,
     _nakshatra_from_drik,
     strip_nulls,
+    get_gana,
+    get_nadi,
 )
 
 
@@ -40,7 +42,10 @@ def compute_summary_card_en(
     except Exception:
         pass
 
-    nak_name, pada, _ = _nakshatra_from_drik(jd, place_obj)
+    nak_name, pada, nak_no, _ = _nakshatra_from_drik(jd, place_obj)
+    
+    gana = get_gana(nak_no)
+    nadi = get_nadi(nak_no)
 
     out: Dict[str, Any] = {
         "weekday": _weekday_from_jd(jd),
@@ -49,6 +54,8 @@ def compute_summary_card_en(
         "rasi": rasi_sign,
         "nakshatra": nak_name,
         "pada": pada,
+        "gana": gana,
+        "nadi": nadi,
     }
 
     return strip_nulls(out)
