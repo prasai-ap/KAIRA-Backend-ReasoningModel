@@ -15,6 +15,8 @@ from app.core.astrology_config import (
     TITHI_NAMES_SHUKLA,
     TITHI_NAMES_KRISHNA,
     RASI_INDEX_TO_NAME,
+    NAKSHATRA_GANA_MAP,
+    NAKSHATRA_NADI_MAP,
 )
 from app.models.schemas.astrology_schemas import PlaceIn, BirthInput
 
@@ -195,6 +197,13 @@ def _nakshatra_from_drik(jd: float, place_obj: drik.Place) -> Tuple[Optional[str
         nak_no = int(nk[0])
         pada = int(nk[1])
         name = NAKSHATRA_EN[nak_no - 1] if 1 <= nak_no <= 27 else None
-        return (name, pada, nk)
+        return (name, pada, nak_no, nk)
 
     return (str(nk), None, nk)
+
+def get_gana(nak_no: int):
+    return NAKSHATRA_GANA_MAP.get(nak_no)
+
+
+def get_nadi(nak_no: int):
+    return NAKSHATRA_NADI_MAP.get(nak_no)
