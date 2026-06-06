@@ -132,7 +132,7 @@ def send_login_otp(db: Session, email: str):
 
     create_otp_record(db, **otp_data)
     print("LOGIN OTP:", otp)
-    send_login_otp_email(email, otp)
+    send_login_otp_email(email, otp, full_name=user.full_name)
 
     return {"message": "OTP sent"}
 
@@ -160,9 +160,9 @@ def resend_otp(db: Session, email: str, purpose: str):
     create_otp_record(db, **otp_data)
 
     if purpose == "register":
-        send_register_otp_email(email, otp, user.full_name)
+        send_register_otp_email(email, otp, full_name=user.full_name)
     else:
-        send_login_otp_email(email, otp)
+        send_login_otp_email(email, otp, full_name=user.full_name)
 
     return {"message": "OTP resent successfully"}
 
