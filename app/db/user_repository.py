@@ -16,12 +16,14 @@ def create_user(
     db: Session,
     email: str,
     full_name: str | None = None,
+    profile_image_url: str | None = None,
     auth_provider: str = "otp",
     google_sub: str | None = None,
 ):
     user = User(
         email=email,
         full_name=full_name,
+        profile_image_url=profile_image_url,
         auth_provider=auth_provider,
         google_sub=google_sub,
         is_email_verified=True,
@@ -40,3 +42,9 @@ def update_last_login(db: Session, user: User):
 
 def get_user_by_id(db: Session, user_id: str):
     return db.query(User).filter(User.id == user_id).first()
+
+def update_user_profile_image(db, user, profile_image_url: str):
+    user.profile_image_url = profile_image_url
+    db.commit()
+    db.refresh(user)
+    return user
