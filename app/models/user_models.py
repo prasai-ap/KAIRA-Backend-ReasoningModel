@@ -12,7 +12,7 @@ class User(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String, unique=True, nullable=False)
     full_name = Column(String, nullable=True)
-
+    profile_image_url = Column(String, nullable=True)
     auth_provider = Column(String, nullable=False, default="otp")
     google_sub = Column(String, unique=True, nullable=True)
 
