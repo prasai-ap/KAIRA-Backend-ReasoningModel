@@ -149,3 +149,17 @@ def get_me(user=Depends(get_current_user)):
 @router.post("/resend-otp")
 def resend_otp_route(payload: ResendOTPRequest, db: Session = Depends(get_db)):
     return resend_otp(db, payload.email, payload.purpose)
+
+@router.post("/me/profile-image")
+def update_my_profile_image(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    image_url = upload_profile_image(file, str(user.id))
+    updated_user = update_user_profile_image(db, user, image_url)
+
+    return {
+        "message": "Profile image updated successfully",
+        "profile_image_url": updated_user.profile_image_url,
+    }
