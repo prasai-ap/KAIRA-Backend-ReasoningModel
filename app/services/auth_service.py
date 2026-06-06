@@ -187,6 +187,7 @@ def login_with_google(db: Session, token: str):
     email = info.get("email")
     google_sub = info.get("google_sub")
     full_name = info.get("full_name")
+    profile_image_url = info.get("profile_image_url")
 
     if not email:
         raise HTTPException(status_code=400, detail="Google account email not found")
@@ -203,10 +204,20 @@ def login_with_google(db: Session, token: str):
             full_name=full_name,
             auth_provider="google",
             google_sub=google_sub,
+            profile_image_url=profile_image_url,
         )
     else:
-        if not user.google_sub:
+        updated = False
+
+        if google_sub and not user.google_sub:
             user.google_sub = google_sub
+            updated = True
+
+        if profile_image_url and not user.profile_image_url:
+            user.profile_image_url = profile_image_url
+            updated = True
+
+        if updated:
             db.commit()
             db.refresh(user)
 
