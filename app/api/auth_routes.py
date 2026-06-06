@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Response, Request, HTTPException
+from fastapi import APIRouter, Depends, Response, Request, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -21,6 +21,8 @@ from app.services.auth_service import (
     resend_otp,
 )
 from app.core.security import get_current_user
+from app.services.profile_image_service import upload_profile_image
+from app.db.user_repository import update_user_profile_image
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -141,6 +143,7 @@ def get_me(user=Depends(get_current_user)):
     return {
         "email": user.email,
         "full_name": user.full_name,
+        "profile_image_url": user.profile_image_url,
     }
 
 @router.post("/resend-otp")
