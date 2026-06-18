@@ -1,4 +1,7 @@
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 RAG_BOOK_PATH = os.getenv("RAG_BOOK_PATH")
 RAG_VECTOR_PATH = os.getenv("RAG_VECTOR_PATH")
