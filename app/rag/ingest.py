@@ -1,6 +1,6 @@
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 
 from app.rag.config import (
@@ -24,8 +24,8 @@ def ingest_phaladeepika():
 
     chunks = splitter.split_documents(documents)
 
-    embeddings = GoogleGenerativeAIEmbeddings(
-        model=RAG_EMBEDDING_MODEL,
+    embeddings = HuggingFaceEmbeddings(
+        model_name=RAG_EMBEDDING_MODEL,
     )
 
     Chroma.from_documents(
