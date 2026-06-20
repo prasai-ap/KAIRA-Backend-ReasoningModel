@@ -9,3 +9,6 @@ venv/
 kairabackend/
 .git
 .gitignore
+rag_data/
+vector_store/
+*.pdf
