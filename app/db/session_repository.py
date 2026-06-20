@@ -73,3 +73,15 @@ def cleanup_expired_sessions(db: Session, days: int = 7):
 
     db.commit()
     return deleted_count
+
+def has_active_refresh_session(db, user_id):
+    return (
+        db.query(RefreshSession)
+        .filter(
+            RefreshSession.user_id == user_id,
+            RefreshSession.is_revoked == False,
+            RefreshSession.expires_at > datetime.now(timezone.utc),
+        )
+        .first()
+        is not None
+    )
