@@ -4,9 +4,10 @@ from langchain_chroma import Chroma
 from app.rag.config import (
     RAG_VECTOR_PATH,
     RAG_COLLECTION_NAME,
-    RAG_TOP_K,
+    RAG_RETRIEVE_K,
     RAG_EMBEDDING_MODEL,
 )
+from app.rag.reranker import rerank_documents
 
 
 def get_vectorstore():
@@ -24,10 +25,12 @@ def get_vectorstore():
 def retrieve_phaladeepika_context(query: str) -> str:
     vectorstore = get_vectorstore()
 
-    docs = vectorstore.similarity_search(
+    candidate_docs = vectorstore.similarity_search(
         query,
-        k=RAG_TOP_K,
+        k=RAG_RETRIEVE_K,
     )
+
+    docs = rerank_documents(query, candidate_docs)
 
     if not docs:
         return "No relevant Phaladeepika context found."
