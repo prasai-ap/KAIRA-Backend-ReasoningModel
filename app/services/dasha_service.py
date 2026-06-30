@@ -93,47 +93,45 @@ def dasha_rows_to_tree(rows: List[List[Any]], level: int) -> Dict[str, Any]:
     return {"level": max(2, lvl), "mahadashas": mahadashas}
 
 
-def yogini_rows_to_tree_level2(rows: List[Tuple[Any, ...]]) -> Dict[str, Any]:
-    maha_map: Dict[int, Dict[str, Any]] = {}
+def yogini_rows_to_tree_level2(rows):
+    mahadashas = []
+    current_maha = None
+    current_l1 = None
+
     for r in rows:
         if len(r) < 4:
             continue
+
         l1 = int(r[0])
         l2 = int(r[1])
         start_str = r[-2]
         dur_years = float(r[-1])
 
-        if l1 not in maha_map:
-            maha_map[l1] = {
+        if current_maha is None or l1 != current_l1:
+            current_maha = {
                 "yogini": _yogini_name_from_lord_id(l1),
                 "lord_planet_id": l1,
                 "lord_planet": _planet_name(l1),
-                "start": None,
+                "start": start_str,
                 "end": None,
                 "antardashas": [],
             }
+            mahadashas.append(current_maha)
+            current_l1 = l1
 
-        maha = maha_map[l1]
-        if maha["start"] is None:
-            maha["start"] = start_str
+        current_maha["antardashas"].append({
+            "yogini": _yogini_name_from_lord_id(l2),
+            "lord_planet_id": l2,
+            "lord_planet": _planet_name(l2),
+            "start": start_str,
+            "end": None,
+            "dur_years": dur_years,
+        })
 
-        maha["antardashas"].append(
-            {
-                "yogini": _yogini_name_from_lord_id(l2),
-                "lord_planet_id": l2,
-                "lord_planet": _planet_name(l2),
-                "start": start_str,
-                "end": None,
-                "dur_years": dur_years,
-            }
-        )
-
-    mahadashas = list(maha_map.values())
-    mahadashas.sort(key=lambda x: (x["start"] or ""))
     _set_end_times(mahadashas)
 
     for maha in mahadashas:
-        antar_list = maha["antardashas"]
+        antar_list = maha.get("antardashas", [])
         antar_list.sort(key=lambda x: x.get("start") or "")
         _set_end_times(antar_list)
         _fill_last_end_from_parent(antar_list, maha.get("end"))
@@ -143,7 +141,10 @@ def yogini_rows_to_tree_level2(rows: List[Tuple[Any, ...]]) -> Dict[str, Any]:
         if last_maha.get("end") is None and last_maha.get("antardashas"):
             last_maha["end"] = last_maha["antardashas"][-1].get("end")
 
-    return {"level": 2, "mahadashas": mahadashas}
+    return {
+        "level": 2,
+        "mahadashas": mahadashas,
+    }
 
 
 def compute_vimshottari(jd: float, place_obj: drik.Place, levels: int) -> Dict[str, Any]:
