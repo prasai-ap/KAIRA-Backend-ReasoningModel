@@ -23,6 +23,12 @@ from app.services.auth_service import (
 from app.core.security import get_current_user
 from app.services.profile_image_service import upload_profile_image
 from app.db.user_repository import update_user_profile_image
+from app.core.rate_limit import (
+    limiter,
+    REGISTER_RATE_LIMIT,
+    LOGIN_RATE_LIMIT,
+    REFRESH_RATE_LIMIT,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -48,11 +54,13 @@ def clear_refresh_cookie(response: Response):
 
 
 @router.post("/register")
+@limiter.limit(REGISTER_RATE_LIMIT)
 def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     return register_user(db, payload.full_name, payload.email)
 
 
 @router.post("/register/verify-otp")
+@limiter.limit("5/minute")
 def verify_register(
     payload: RegisterVerifyOTPRequest,
     response: Response,
@@ -68,11 +76,13 @@ def verify_register(
 
 
 @router.post("/login/send-otp")
+@limiter.limit(LOGIN_RATE_LIMIT)
 def login_send(payload: LoginSendOTPRequest, db: Session = Depends(get_db)):
     return send_login_otp(db, payload.email)
 
 
 @router.post("/login/verify-otp")
+@limiter.limit("5/minute")
 def login_verify(
     payload: LoginVerifyOTPRequest,
     response: Response,
@@ -88,6 +98,7 @@ def login_verify(
 
 
 @router.post("/google")
+@limiter.limit("10/minute")
 def google_login_route(
     payload: GoogleLoginRequest,
     response: Response,
@@ -103,6 +114,7 @@ def google_login_route(
 
 
 @router.post("/refresh")
+@limiter.limit(REFRESH_RATE_LIMIT)
 def refresh_token_route(
     request: Request,
     response: Response,
@@ -147,10 +159,12 @@ def get_me(user=Depends(get_current_user)):
     }
 
 @router.post("/resend-otp")
+@limiter.limit("3/minute")
 def resend_otp_route(payload: ResendOTPRequest, db: Session = Depends(get_db)):
     return resend_otp(db, payload.email, payload.purpose)
 
 @router.post("/me/profile-image")
+@limiter.limit("10/hour")
 def update_my_profile_image(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
