@@ -163,7 +163,7 @@ def get_me(user=Depends(get_current_user)):
 
 @router.post("/resend-otp")
 @limiter.limit("3/minute")
-def resend_otp_route(payload: ResendOTPRequest, db: Session = Depends(get_db)):
+def resend_otp_route(request: Request, payload: ResendOTPRequest, db: Session = Depends(get_db)):
     return resend_otp(db, payload.email, payload.purpose)
 
 @router.post("/me/profile-image")
