@@ -13,6 +13,12 @@ from app.core.database import SessionLocal
 from app.db.session_repository import cleanup_revoked_sessions, cleanup_expired_sessions
 from app.db.otp_repository import cleanup_otps
 
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi import _rate_limit_exceeded_handler
+
+from app.core.rate_limit import limiter
+
 app = FastAPI()
 
 app.add_middleware(
@@ -26,6 +32,10 @@ app.add_middleware(
 app.include_router(astrology_router)
 app.include_router(auth_router)
 app.include_router(chat_router)
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 @app.on_event("startup")
 def cleanup_sessions_on_startup():
