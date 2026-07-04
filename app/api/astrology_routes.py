@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException ,Request
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -9,12 +9,15 @@ from app.services.user_astrology_service import (
     get_saved_user_astrology,
     regenerate_user_astrology,
 )
+from app.core.rate_limit import limiter, ASTROLOGY_RATE_LIMIT
 
 router = APIRouter(prefix="/astrology", tags=["astrology"])
 
 
 @router.post("/generate")
+@limiter.limit(ASTROLOGY_RATE_LIMIT)
 def generate_astrology(
+    request: Request,
     data: BirthInput,
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
@@ -34,7 +37,9 @@ def get_my_astrology(
 
 
 @router.post("/regenerate")
+@limiter.limit(ASTROLOGY_RATE_LIMIT)
 def regenerate_astrology(
+    request: Request,
     data: BirthInput,
     db: Session = Depends(get_db),
     user=Depends(get_current_user),

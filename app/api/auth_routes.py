@@ -55,13 +55,14 @@ def clear_refresh_cookie(response: Response):
 
 @router.post("/register")
 @limiter.limit(REGISTER_RATE_LIMIT)
-def register(payload: RegisterRequest, db: Session = Depends(get_db)):
+def register(request: Request, payload: RegisterRequest, db: Session = Depends(get_db)):
     return register_user(db, payload.full_name, payload.email)
 
 
 @router.post("/register/verify-otp")
 @limiter.limit("5/minute")
 def verify_register(
+    request: Request,
     payload: RegisterVerifyOTPRequest,
     response: Response,
     db: Session = Depends(get_db),
@@ -77,13 +78,14 @@ def verify_register(
 
 @router.post("/login/send-otp")
 @limiter.limit(LOGIN_RATE_LIMIT)
-def login_send(payload: LoginSendOTPRequest, db: Session = Depends(get_db)):
+def login_send(request: Request, payload: LoginSendOTPRequest, db: Session = Depends(get_db)):
     return send_login_otp(db, payload.email)
 
 
 @router.post("/login/verify-otp")
 @limiter.limit("5/minute")
 def login_verify(
+    request: Request,
     payload: LoginVerifyOTPRequest,
     response: Response,
     db: Session = Depends(get_db),
@@ -100,6 +102,7 @@ def login_verify(
 @router.post("/google")
 @limiter.limit("10/minute")
 def google_login_route(
+    request: Request,
     payload: GoogleLoginRequest,
     response: Response,
     db: Session = Depends(get_db),
@@ -166,6 +169,7 @@ def resend_otp_route(payload: ResendOTPRequest, db: Session = Depends(get_db)):
 @router.post("/me/profile-image")
 @limiter.limit("10/hour")
 def update_my_profile_image(
+    request: Request,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
