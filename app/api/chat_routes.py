@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -10,12 +10,15 @@ from app.services.chat_service import (
     get_session_messages,
     delete_chat_session,
 )
+from app.core.rate_limit import limiter, CHAT_RATE_LIMIT
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 
 @router.post("/message")
+@limiter.limit(CHAT_RATE_LIMIT)
 def chat(
+    request: Request,
     payload: SendMessageRequest,
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
