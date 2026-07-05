@@ -85,3 +85,46 @@ def get_user_payments(db, user_id):
         .order_by(PaymentTransaction.created_at.desc())
         .all()
     )
+
+def mark_invoice_sent(db, payment):
+    if not payment.invoice_number:
+        payment.invoice_number = f"INV-{payment.transaction_uuid}"
+
+    payment.invoice_sent_at = datetime.now(timezone.utc)
+    payment.updated_at = datetime.now(timezone.utc)
+
+    db.commit()
+    db.refresh(payment)
+    return payment
+
+
+def get_subscription_by_payment_id(db, payment_id):
+    return (
+        db.query(UserSubscription)
+        .filter(UserSubscription.payment_id == payment_id)
+        .first()
+    )
+
+
+def get_subscriptions_expiring_soon(db):
+    now = datetime.now(timezone.utc)
+    next_24_hours = now + timedelta(days=1)
+
+    return (
+        db.query(UserSubscription)
+        .filter(
+            UserSubscription.is_active == True,
+            UserSubscription.end_date > now,
+            UserSubscription.end_date <= next_24_hours,
+            UserSubscription.expiry_reminder_sent_at == None,
+        )
+        .all()
+    )
+
+
+def mark_expiry_reminder_sent(db, subscription):
+    subscription.expiry_reminder_sent_at = datetime.now(timezone.utc)
+
+    db.commit()
+    db.refresh(subscription)
+    return subscription
