@@ -5,9 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.astrology_routes import router as astrology_router
 from app.api.auth_routes import router as auth_router
-from app.models.user_astrology_models import UserAstrologyData
 from app.api.chat_routes import router as chat_router
-from app.models.chat_models import ChatSession, ChatMessage
 from app.api.payment_routes import router as payment_router
 
 from app.core.database import SessionLocal
