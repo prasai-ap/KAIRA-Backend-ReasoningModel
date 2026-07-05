@@ -22,7 +22,11 @@ from app.db.payment_repository import (
     create_subscription,
     get_active_subscription,
     get_user_payments,
+    get_subscription_by_payment_id,
+    mark_invoice_sent,
 )
+from app.db.user_repository import get_user_by_id
+from app.services.billing_email_service import send_invoice_email
 
 
 def initiate_esewa_payment(db, user):
@@ -65,13 +69,32 @@ def initiate_esewa_payment(db, user):
 
 
 def verify_esewa_payment(db, transaction_uuid, total_amount):
+    if not transaction_uuid:
+        raise HTTPException(status_code=400, detail="Transaction UUID missing")
+
+    if not total_amount:
+        raise HTTPException(status_code=400, detail="Total amount missing")
+
     payment = get_payment_by_transaction_uuid(db, transaction_uuid)
 
     if not payment:
         raise HTTPException(status_code=404, detail="Payment not found")
 
     if payment.status == "SUCCESS":
-        return {"message": "Payment already verified"}
+        subscription = get_subscription_by_payment_id(db, payment.id)
+        user = get_user_by_id(db, payment.user_id)
+
+        if user and subscription and not payment.invoice_sent_at:
+            try:
+                send_invoice_email(user, payment, subscription)
+                mark_invoice_sent(db, payment)
+            except Exception as email_error:
+                print(f"Invoice email failed: {email_error}")
+
+        return {
+            "message": "Payment already verified",
+            "subscription_activated": True,
+        }
 
     params = {
         "product_code": ESEWA_PRODUCT_CODE,
@@ -79,7 +102,17 @@ def verify_esewa_payment(db, transaction_uuid, total_amount):
         "transaction_uuid": transaction_uuid,
     }
 
-    response = requests.get(ESEWA_STATUS_CHECK_URL, params=params, timeout=10)
+    try:
+        response = requests.get(
+            ESEWA_STATUS_CHECK_URL,
+            params=params,
+            timeout=10,
+        )
+    except requests.RequestException:
+        raise HTTPException(
+            status_code=400,
+            detail="Could not connect to eSewa verification service",
+        )
 
     if response.status_code != 200:
         mark_payment_failed(db, payment)
@@ -92,19 +125,33 @@ def verify_esewa_payment(db, transaction_uuid, total_amount):
         transaction_code = data.get("ref_id") or data.get("transaction_code")
 
         payment = mark_payment_success(
-            db,
-            payment,
+            db=db,
+            payment=payment,
             transaction_code=transaction_code,
         )
 
-        create_subscription(
-            db=db,
-            user_id=payment.user_id,
-            payment_id=payment.id,
-            plan_name=PACKAGE_NAME,
-            price=PACKAGE_PRICE,
-            duration_days=PACKAGE_DURATION_DAYS,
-        )
+        existing_subscription = get_subscription_by_payment_id(db, payment.id)
+
+        if existing_subscription:
+            subscription = existing_subscription
+        else:
+            subscription = create_subscription(
+                db=db,
+                user_id=payment.user_id,
+                payment_id=payment.id,
+                plan_name=PACKAGE_NAME,
+                price=PACKAGE_PRICE,
+                duration_days=PACKAGE_DURATION_DAYS,
+            )
+
+        user = get_user_by_id(db, payment.user_id)
+
+        if user and not payment.invoice_sent_at:
+            try:
+                send_invoice_email(user, payment, subscription)
+                mark_invoice_sent(db, payment)
+            except Exception as email_error:
+                print(f"Invoice email failed: {email_error}")
 
         return {
             "message": "Payment verified successfully",
@@ -143,6 +190,8 @@ def get_my_payment_history(db, user):
             "status": p.status,
             "transaction_uuid": p.transaction_uuid,
             "transaction_code": p.transaction_code,
+            "invoice_number": p.invoice_number,
+            "invoice_sent_at": p.invoice_sent_at.isoformat() if p.invoice_sent_at else None,
             "created_at": p.created_at.isoformat(),
             "paid_at": p.paid_at.isoformat() if p.paid_at else None,
         }
