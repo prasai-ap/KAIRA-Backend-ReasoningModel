@@ -21,12 +21,13 @@ class PaymentTransaction(Base):
     transaction_code = Column(String, nullable=True)
 
     payment_method = Column(String, default="ESEWA")
-    status = Column(String, default="PENDING")  # PENDING, SUCCESS, FAILED
+    status = Column(String, default="PENDING")
 
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     paid_at = Column(DateTime(timezone=True), nullable=True)
-
+    invoice_number = Column(String, nullable=True)
+    invoice_sent_at = Column(DateTime(timezone=True), nullable=True)
 
 class UserSubscription(Base):
     __tablename__ = "user_subscriptions"
@@ -45,3 +46,4 @@ class UserSubscription(Base):
     payment_id = Column(UUID(as_uuid=True), ForeignKey("payment_transactions.id"), nullable=False)
 
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    expiry_reminder_sent_at = Column(DateTime(timezone=True), nullable=True)
