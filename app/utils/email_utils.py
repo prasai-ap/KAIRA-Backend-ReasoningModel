@@ -10,13 +10,22 @@ EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 
 
-def send_email(to_email: str, subject: str, html_body: str):
+def send_email(
+    to_email: str,
+    subject: str,
+    html_body: str,
+    text_body: str | None = None,
+):
     msg = EmailMessage()
     msg["From"] = EMAIL_USER
     msg["To"] = to_email
     msg["Subject"] = subject
 
-    msg.set_content("Please view this email in an HTML-supported email client.")
+    if text_body:
+        msg.set_content(text_body)
+    else:
+        msg.set_content("Please view this email in an HTML-supported email client.")
+
     msg.add_alternative(html_body, subtype="html")
 
     with smtplib.SMTP(EMAIL_HOST, EMAIL_PORT) as server:
@@ -35,7 +44,11 @@ def send_register_otp_email(email: str, otp: str, full_name: str):
         subtitle="Welcome to Kaira. Use the OTP below to verify your email and begin exploring your astrology profile.",
     )
 
-    send_email(email, subject, body)
+    send_email(
+        to_email=email,
+        subject=subject,
+        html_body=body,
+    )
 
 
 def send_login_otp_email(email: str, otp: str, full_name: str):
@@ -48,4 +61,8 @@ def send_login_otp_email(email: str, otp: str, full_name: str):
         subtitle="Use the OTP below to securely login to your Kaira account.",
     )
 
-    send_email(email, subject, body)
+    send_email(
+        to_email=email,
+        subject=subject,
+        html_body=body,
+    )
