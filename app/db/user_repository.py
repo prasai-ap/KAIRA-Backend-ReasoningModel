@@ -48,3 +48,9 @@ def update_user_profile_image(db, user, profile_image_url: str):
     db.commit()
     db.refresh(user)
     return user
+
+def increment_free_chat_used(db, user):
+    user.free_chat_used = (user.free_chat_used or 0) + 1
+    db.commit()
+    db.refresh(user)
+    return user
