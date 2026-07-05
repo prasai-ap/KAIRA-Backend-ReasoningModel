@@ -1,4 +1,5 @@
 import os
+from html import escape
 
 KAIRA_LOGO_URL = os.getenv("KAIRA_LOGO_URL", "")
 KAIRA_BANNER_URL = os.getenv("KAIRA_BANNER_URL", "")
