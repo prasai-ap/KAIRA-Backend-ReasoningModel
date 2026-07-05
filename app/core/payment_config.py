@@ -1,0 +1,16 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+ESEWA_PRODUCT_CODE = os.getenv("ESEWA_PRODUCT_CODE", "EPAYTEST")
+ESEWA_SECRET_KEY = os.getenv("ESEWA_SECRET_KEY")
+ESEWA_PAYMENT_URL = os.getenv("ESEWA_PAYMENT_URL")
+ESEWA_STATUS_CHECK_URL = os.getenv("ESEWA_STATUS_CHECK_URL")
+
+ESEWA_SUCCESS_URL = os.getenv("ESEWA_SUCCESS_URL")
+ESEWA_FAILURE_URL = os.getenv("ESEWA_FAILURE_URL")
+
+PACKAGE_NAME = os.getenv("PACKAGE_NAME")
+PACKAGE_PRICE = int(os.getenv("PACKAGE_PRICE"))
+PACKAGE_DURATION_DAYS = int(os.getenv("PACKAGE_DURATION_DAYS"))
