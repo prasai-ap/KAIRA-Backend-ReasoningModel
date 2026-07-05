@@ -30,6 +30,7 @@ from app.models.otp_models import OTPCode
 from app.models.session_models import RefreshSession
 from app.models.user_astrology_models import UserAstrologyData
 from app.models.chat_models import ChatSession, ChatMessage
+from app.models.payment_models import PaymentTransaction, UserSubscription
 
 target_metadata = Base.metadata
 
