@@ -18,6 +18,9 @@ from slowapi import _rate_limit_exceeded_handler
 
 from app.core.rate_limit import limiter
 
+from apscheduler.schedulers.background import BackgroundScheduler
+from app.services.subscription_reminder_service import send_expiry_reminders
+
 app = FastAPI()
 
 app.add_middleware(
@@ -46,3 +49,21 @@ def cleanup_sessions_on_startup():
         cleanup_otps(db)
     finally:
         db.close()
+
+scheduler = BackgroundScheduler(timezone="Asia/Kathmandu")
+
+@app.on_event("startup")
+def start_scheduler():
+    scheduler.add_job(
+        send_expiry_reminders,
+        "interval",
+        hours=1,
+        id="subscription_expiry_reminders",
+        replace_existing=True,
+    )
+    scheduler.start()
+
+
+@app.on_event("shutdown")
+def shutdown_scheduler():
+    scheduler.shutdown()
