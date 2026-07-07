@@ -128,3 +128,25 @@ def mark_expiry_reminder_sent(db, subscription):
     db.commit()
     db.refresh(subscription)
     return subscription
+
+def get_expired_subscriptions_pending_email(db):
+    now = datetime.now(timezone.utc)
+
+    return (
+        db.query(UserSubscription)
+        .filter(
+            UserSubscription.end_date <= now,
+            UserSubscription.expired_email_sent_at == None,
+        )
+        .all()
+    )
+
+
+def mark_expired_email_sent(db, subscription):
+    subscription.expired_email_sent_at = datetime.now(timezone.utc)
+    subscription.is_active = False
+
+    db.commit()
+    db.refresh(subscription)
+
+    return subscription
