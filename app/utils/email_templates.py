@@ -499,3 +499,61 @@ Kaira Team
 """
 
     return subject, html_body, text_body
+
+def build_subscription_expired_email_template(user, subscription):
+    user_name = escape(user.full_name or "there")
+    plan_name = escape(subscription.plan_name)
+
+    end_date = subscription.end_date.strftime("%B %d, %Y")
+
+    subject = "Your Kaira Premium Package Has Expired"
+
+    html_body = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif; background-color: #f7f4ef; padding: 24px;">
+        <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 28px; border-radius: 12px;">
+            <h2 style="color: #3b2f2f;">Your Kaira Premium Package Has Expired</h2>
+
+            <p>Hi {user_name},</p>
+
+            <p>
+                Your <strong>{plan_name}</strong> package expired on
+                <strong>{end_date}</strong>.
+            </p>
+
+            <p>
+                You can renew your subscription anytime to continue using unlimited Kaira chat
+                and premium astrology features.
+            </p>
+
+            <div style="margin-top: 24px; padding: 16px; background-color: #f3eee7; border-radius: 8px;">
+                <strong>Plan:</strong> {plan_name}<br/>
+                <strong>Expired On:</strong> {end_date}
+            </div>
+
+            <p style="margin-top: 24px;">
+                Thank you for using Kaira.
+            </p>
+
+            <p>
+                Warm regards,<br/>
+                <strong>Kaira Team</strong>
+            </p>
+        </div>
+    </body>
+    </html>
+    """
+
+    text_body = f"""
+Hi {user.full_name or "there"},
+
+Your {subscription.plan_name} package expired on {end_date}.
+
+You can renew your subscription anytime to continue using unlimited Kaira chat and premium astrology features.
+
+Thank you for using Kaira.
+
+Kaira Team
+"""
+
+    return subject, html_body, text_body
