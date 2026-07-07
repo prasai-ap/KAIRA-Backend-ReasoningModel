@@ -18,6 +18,7 @@ from app.rag.retriever import retrieve_phaladeepika_context
 from app.db.payment_repository import get_active_subscription
 from app.db.user_repository import increment_free_chat_used
 import traceback
+
 def build_prompt(astrology, chat_summary, rag_context, user_message):
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 

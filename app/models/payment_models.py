@@ -47,3 +47,4 @@ class UserSubscription(Base):
 
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     expiry_reminder_sent_at = Column(DateTime(timezone=True), nullable=True)
+    expired_email_sent_at = Column(DateTime(timezone=True), nullable=True)
