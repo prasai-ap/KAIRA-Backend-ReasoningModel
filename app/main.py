@@ -19,7 +19,10 @@ from slowapi import _rate_limit_exceeded_handler
 from app.core.rate_limit import limiter
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from app.services.subscription_reminder_service import send_expiry_reminders
+from app.services.subscription_reminder_service import (
+    send_expiry_reminders,
+    send_expired_subscription_emails,
+)
 
 app = FastAPI()
 
@@ -61,6 +64,15 @@ def start_scheduler():
         id="subscription_expiry_reminders",
         replace_existing=True,
     )
+    
+    scheduler.add_job(
+        send_expired_subscription_emails,
+        "interval",
+        hours=1,
+        id="subscription_expired_emails",
+        replace_existing=True,
+    )
+
     scheduler.start()
 
 
