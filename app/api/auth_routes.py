@@ -9,6 +9,7 @@ from app.models.schemas.auth_schemas import (
     LoginVerifyOTPRequest,
     GoogleLoginRequest,
     ResendOTPRequest,
+    MeResponse,
 )
 from app.services.auth_service import (
     register_user,
@@ -19,6 +20,7 @@ from app.services.auth_service import (
     refresh_tokens,
     logout_user,
     resend_otp,
+    get_me_profile,
 )
 from app.core.security import get_current_user
 from app.services.profile_image_service import upload_profile_image
@@ -153,13 +155,12 @@ def logout(
     clear_refresh_cookie(response)
     return result
 
-@router.get("/me")
-def get_me(user=Depends(get_current_user)):
-    return {
-        "email": user.email,
-        "full_name": user.full_name,
-        "profile_image_url": user.profile_image_url,
-    }
+@router.get("/me", response_model=MeResponse)
+def me(
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    return get_me_profile(db, user)
 
 @router.post("/resend-otp")
 @limiter.limit("3/minute")
