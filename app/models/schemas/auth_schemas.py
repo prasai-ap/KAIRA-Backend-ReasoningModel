@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-
+from typing import Optional
 
 class RegisterRequest(BaseModel):
     full_name: str
@@ -34,3 +34,11 @@ class TokenResponse(BaseModel):
 class ResendOTPRequest(BaseModel):
     email: EmailStr
     purpose: str
+
+class MeResponse(BaseModel):
+    email: str
+    full_name: Optional[str] = None
+    profile_image_url: Optional[str] = None
+    free_chat_used: int
+    package_name: Optional[str] = None
+    subscription_expiry_date: Optional[str] = None
