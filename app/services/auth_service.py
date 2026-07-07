@@ -29,7 +29,7 @@ from app.services.jwt_service import create_access_token, create_refresh_token
 from app.services.google_auth_service import verify_google_token
 from app.utils.email_utils import send_register_otp_email, send_login_otp_email
 from app.core.auth_config import REFRESH_TOKEN_EXPIRE_DAYS
-
+from app.db.payment_repository import get_active_subscription
 
 def _issue_tokens(db: Session, user):
     update_last_login(db, user)
@@ -272,4 +272,16 @@ def logout_user(db: Session, refresh_token: str):
     return {
         "message": "Logged out Successfully",
         "revoked_sessions": revoked_count,
+    }
+
+def get_me_profile(db, user):
+    subscription = get_active_subscription(db, user.id)
+
+    return {
+        "email": user.email,
+        "full_name": user.full_name,
+        "profile_image_url": user.profile_image_url,
+        "free_chat_used": user.free_chat_used or 0,
+        "package_name": subscription.plan_name if subscription else None,
+        "subscription_expiry_date": subscription.end_date.isoformat() if subscription else None,
     }
