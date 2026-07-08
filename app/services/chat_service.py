@@ -16,7 +16,8 @@ from app.db.user_astrology_repository import get_user_astrology
 from app.services.ai_service import generate_ai_response
 from app.services.chat_history_service import summarize_chat_history
 from app.rag.retriever import retrieve_phaladeepika_context
-
+from app.db.payment_repository import get_active_subscription
+from app.db.user_repository import increment_free_chat_used
 
 def build_prompt(astrology, chat_summary, rag_context, user_message):
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -148,6 +149,17 @@ def send_message(db, user, message, session_id=None):
             detail="Astrology data not found for user. Please generate astrology data first.",
         )
 
+    subscription = get_active_subscription(db, user.id)
+
+    if not subscription:
+        free_chat_used = user.free_chat_used or 0
+
+        if free_chat_used >= 5:
+            raise HTTPException(
+                status_code=403,
+                detail="Free chat limit reached. Please subscribe to continue unlimited chat.",
+            )
+
     if session_id:
         session = get_session(db, session_id, user.id)
         if not session:
@@ -177,6 +189,9 @@ def send_message(db, user, message, session_id=None):
     except Exception:
         reply = "Sorry, I could not generate a response right now. Please try again."
 
+    if not subscription:
+        increment_free_chat_used(db, user)
+
     if session is None:
         session = create_session(db, user.id, message[:40])
 
@@ -191,6 +206,9 @@ def send_message(db, user, message, session_id=None):
     return {
         "session_id": str(session.id),
         "reply": reply,
+        "free_chat_used": user.free_chat_used if not subscription else None,
+        "free_chat_limit": 5 if not subscription else None,
+        "subscription_active": True if subscription else False,
     }
 
 
