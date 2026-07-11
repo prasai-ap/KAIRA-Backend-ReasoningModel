@@ -10,6 +10,10 @@ from app.services.payment_service import (
     get_my_subscription,
     get_my_payment_history,
 )
+from app.services.stripe_payment_service import (
+    create_stripe_checkout_session,
+    handle_stripe_webhook,
+)
 
 router = APIRouter(prefix="/payment", tags=["payment"])
 
@@ -58,3 +62,25 @@ def payment_history(
     user=Depends(get_current_user),
 ):
     return get_my_payment_history(db, user)
+
+
+@router.post("/stripe/create-checkout-session")
+def stripe_create_checkout_session(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    return create_stripe_checkout_session(
+        db=db,
+        user=current_user,
+    )
+
+
+@router.post("/stripe/webhook")
+async def stripe_webhook(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    return await handle_stripe_webhook(
+        request=request,
+        db=db,
+    )
