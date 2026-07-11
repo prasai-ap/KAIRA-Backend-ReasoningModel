@@ -17,9 +17,10 @@ from app.utils.esewa_utils import generate_esewa_signature
 from app.db.payment_repository import (
     create_pending_payment,
     get_payment_by_transaction_uuid,
-    mark_payment_success,
+    mark_payment_paid,
     mark_payment_failed,
     create_subscription,
+    activate_or_extend_subscription,
     get_active_subscription,
     get_user_payments,
     get_subscription_by_payment_id,
@@ -27,6 +28,17 @@ from app.db.payment_repository import (
 )
 from app.db.user_repository import get_user_by_id
 from app.services.billing_email_service import send_invoice_email
+
+
+def send_invoice_if_needed(db, payment, subscription):
+    user = get_user_by_id(db, payment.user_id)
+
+    if user and subscription and not payment.invoice_sent_at:
+        try:
+            send_invoice_email(user, payment, subscription)
+            mark_invoice_sent(db, payment)
+        except Exception as email_error:
+            print(f"Invoice email failed: {email_error}")
 
 
 def initiate_esewa_payment(db, user):
@@ -38,6 +50,8 @@ def initiate_esewa_payment(db, user):
         package_name=PACKAGE_NAME,
         amount=PACKAGE_PRICE,
         transaction_uuid=transaction_uuid,
+        payment_method="ESEWA",
+        currency="NPR",
     )
 
     signature = generate_esewa_signature(
@@ -63,6 +77,8 @@ def initiate_esewa_payment(db, user):
 
     return {
         "payment_id": str(payment.id),
+        "payment_method": payment.payment_method,
+        "payment_status": payment.payment_status,
         "payment_url": ESEWA_PAYMENT_URL,
         "form_data": form_data,
     }
@@ -80,16 +96,21 @@ def verify_esewa_payment(db, transaction_uuid, total_amount):
     if not payment:
         raise HTTPException(status_code=404, detail="Payment not found")
 
-    if payment.status == "SUCCESS":
+    # Already verified payment should not create duplicate subscription extension
+    if payment.payment_status == "PAID":
         subscription = get_subscription_by_payment_id(db, payment.id)
-        user = get_user_by_id(db, payment.user_id)
 
-        if user and subscription and not payment.invoice_sent_at:
-            try:
-                send_invoice_email(user, payment, subscription)
-                mark_invoice_sent(db, payment)
-            except Exception as email_error:
-                print(f"Invoice email failed: {email_error}")
+        if not subscription:
+            subscription = create_subscription(
+                db=db,
+                user_id=payment.user_id,
+                payment_id=payment.id,
+                plan_name=payment.package_name,
+                price=payment.amount,
+                duration_days=PACKAGE_DURATION_DAYS,
+            )
+
+        send_invoice_if_needed(db, payment, subscription)
 
         return {
             "message": "Payment already verified",
@@ -124,7 +145,7 @@ def verify_esewa_payment(db, transaction_uuid, total_amount):
     if status == "COMPLETE":
         transaction_code = data.get("ref_id") or data.get("transaction_code")
 
-        payment = mark_payment_success(
+        payment = mark_payment_paid(
             db=db,
             payment=payment,
             transaction_code=transaction_code,
@@ -135,23 +156,16 @@ def verify_esewa_payment(db, transaction_uuid, total_amount):
         if existing_subscription:
             subscription = existing_subscription
         else:
-            subscription = create_subscription(
+            subscription = activate_or_extend_subscription(
                 db=db,
                 user_id=payment.user_id,
                 payment_id=payment.id,
-                plan_name=PACKAGE_NAME,
-                price=PACKAGE_PRICE,
+                plan_name=payment.package_name,
+                price=payment.amount,
                 duration_days=PACKAGE_DURATION_DAYS,
             )
 
-        user = get_user_by_id(db, payment.user_id)
-
-        if user and not payment.invoice_sent_at:
-            try:
-                send_invoice_email(user, payment, subscription)
-                mark_invoice_sent(db, payment)
-            except Exception as email_error:
-                print(f"Invoice email failed: {email_error}")
+        send_invoice_if_needed(db, payment, subscription)
 
         return {
             "message": "Payment verified successfully",
@@ -187,9 +201,16 @@ def get_my_payment_history(db, user):
             "id": str(p.id),
             "package_name": p.package_name,
             "amount": p.amount,
-            "status": p.status,
+            "currency": p.currency,
+            "payment_method": p.payment_method,
+            "payment_status": p.payment_status,
+
+            "status": p.payment_status,
+
             "transaction_uuid": p.transaction_uuid,
             "transaction_code": p.transaction_code,
+            "stripe_checkout_session_id": p.stripe_checkout_session_id,
+            "stripe_payment_intent_id": p.stripe_payment_intent_id,
             "invoice_number": p.invoice_number,
             "invoice_sent_at": p.invoice_sent_at.isoformat() if p.invoice_sent_at else None,
             "created_at": p.created_at.isoformat(),
