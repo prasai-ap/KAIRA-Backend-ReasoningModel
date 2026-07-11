@@ -96,7 +96,6 @@ def verify_esewa_payment(db, transaction_uuid, total_amount):
     if not payment:
         raise HTTPException(status_code=404, detail="Payment not found")
 
-    # Already verified payment should not create duplicate subscription extension
     if payment.payment_status == "PAID":
         subscription = get_subscription_by_payment_id(db, payment.id)
 
