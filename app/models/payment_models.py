@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 
 from sqlalchemy import Column, String, DateTime, Boolean, ForeignKey, Integer
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 
@@ -16,18 +15,27 @@ class PaymentTransaction(Base):
 
     package_name = Column(String, nullable=False)
     amount = Column(Integer, nullable=False)
-
+    currency = Column(String, default="NPR", nullable=False)
     transaction_uuid = Column(String, unique=True, index=True, nullable=False)
     transaction_code = Column(String, nullable=True)
-
-    payment_method = Column(String, default="ESEWA")
-    status = Column(String, default="PENDING")
+    payment_method = Column(String, default="ESEWA", nullable=False)
+    payment_status = Column(String, default="PENDING", nullable=False)
+    
+    stripe_checkout_session_id = Column(String, unique=True, index=True, nullable=True)
+    stripe_payment_intent_id = Column(String, nullable=True)
 
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
     paid_at = Column(DateTime(timezone=True), nullable=True)
+
     invoice_number = Column(String, nullable=True)
     invoice_sent_at = Column(DateTime(timezone=True), nullable=True)
+
 
 class UserSubscription(Base):
     __tablename__ = "user_subscriptions"
