@@ -63,7 +63,6 @@ def initiate_esewa_payment(db, user):
 
     return {
         "payment_id": str(payment.id),
-        "payment_method": "ESEWA",
         "payment_url": ESEWA_PAYMENT_URL,
         "form_data": form_data,
     }
@@ -188,7 +187,6 @@ def get_my_payment_history(db, user):
             "id": str(p.id),
             "package_name": p.package_name,
             "amount": p.amount,
-            "payment_method": p.payment_method,
             "status": p.status,
             "transaction_uuid": p.transaction_uuid,
             "transaction_code": p.transaction_code,

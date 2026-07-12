@@ -1,3 +1,4 @@
+from aiohttp import request
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
@@ -38,7 +39,9 @@ def esewa_success(
 
 
 @router.get("/esewa/failure")
-def esewa_failure():
+def esewa_failure(request: Request):
+    print("ESEWA FAILURE QUERY PARAMS:", dict(request.query_params))
+    
     return RedirectResponse(
         url="http://localhost:5173/payment/failure"
     )

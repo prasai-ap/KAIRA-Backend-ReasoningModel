@@ -9,14 +9,11 @@ def create_pending_payment(db, user_id, package_name, amount, transaction_uuid):
         package_name=package_name,
         amount=amount,
         transaction_uuid=transaction_uuid,
-        payment_method="ESEWA",
         status="PENDING",
     )
-
     db.add(payment)
     db.commit()
     db.refresh(payment)
-
     return payment
 
 
@@ -33,20 +30,16 @@ def mark_payment_success(db, payment, transaction_code=None):
     payment.transaction_code = transaction_code
     payment.paid_at = datetime.now(timezone.utc)
     payment.updated_at = datetime.now(timezone.utc)
-
     db.commit()
     db.refresh(payment)
-
     return payment
 
 
 def mark_payment_failed(db, payment):
     payment.status = "FAILED"
     payment.updated_at = datetime.now(timezone.utc)
-
     db.commit()
     db.refresh(payment)
-
     return payment
 
 
@@ -67,7 +60,6 @@ def create_subscription(db, user_id, payment_id, plan_name, price, duration_days
     db.add(subscription)
     db.commit()
     db.refresh(subscription)
-
     return subscription
 
 
@@ -94,7 +86,6 @@ def get_user_payments(db, user_id):
         .all()
     )
 
-
 def mark_invoice_sent(db, payment):
     if not payment.invoice_number:
         payment.invoice_number = f"INV-{payment.transaction_uuid}"
@@ -104,7 +95,6 @@ def mark_invoice_sent(db, payment):
 
     db.commit()
     db.refresh(payment)
-
     return payment
 
 
@@ -137,9 +127,7 @@ def mark_expiry_reminder_sent(db, subscription):
 
     db.commit()
     db.refresh(subscription)
-
     return subscription
-
 
 def get_expired_subscriptions_pending_email(db):
     now = datetime.now(timezone.utc)
