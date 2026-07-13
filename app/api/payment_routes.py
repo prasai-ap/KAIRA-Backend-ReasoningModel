@@ -1,5 +1,7 @@
-from aiohttp import request
-from fastapi import APIRouter, Depends, Request
+import base64
+import json
+
+from fastapi import APIRouter, Depends, Request, HTTPException
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
@@ -12,7 +14,22 @@ from app.services.payment_service import (
     get_my_payment_history,
 )
 
+
 router = APIRouter(prefix="/payment", tags=["payment"])
+
+
+def decode_esewa_data(encoded_data: str):
+    try:
+        padding = "=" * (-len(encoded_data) % 4)
+        decoded_bytes = base64.b64decode(encoded_data + padding)
+        decoded_text = decoded_bytes.decode("utf-8")
+        return json.loads(decoded_text)
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid eSewa data: {str(error)}",
+        )
 
 
 @router.post("/esewa/initiate")
@@ -28,10 +45,36 @@ def esewa_success(
     request: Request,
     db: Session = Depends(get_db),
 ):
+    data = request.query_params.get("data")
+
     transaction_uuid = request.query_params.get("transaction_uuid")
     total_amount = request.query_params.get("total_amount")
 
-    verify_esewa_payment(db, transaction_uuid, total_amount)
+    if data:
+        decoded_data = decode_esewa_data(data)
+
+        print("ESEWA SUCCESS DECODED DATA:", decoded_data)
+
+        transaction_uuid = decoded_data.get("transaction_uuid")
+        total_amount = decoded_data.get("total_amount")
+        esewa_status = decoded_data.get("status")
+
+        if esewa_status != "COMPLETE":
+            return RedirectResponse(
+                url="http://localhost:5173/payment/failure"
+            )
+
+    if not transaction_uuid:
+        raise HTTPException(status_code=400, detail="Transaction UUID missing")
+
+    if not total_amount:
+        raise HTTPException(status_code=400, detail="Total amount missing")
+
+    verify_esewa_payment(
+        db=db,
+        transaction_uuid=transaction_uuid,
+        total_amount=total_amount,
+    )
 
     return RedirectResponse(
         url="http://localhost:5173/payment/success"
@@ -41,7 +84,7 @@ def esewa_success(
 @router.get("/esewa/failure")
 def esewa_failure(request: Request):
     print("ESEWA FAILURE QUERY PARAMS:", dict(request.query_params))
-    
+
     return RedirectResponse(
         url="http://localhost:5173/payment/failure"
     )
