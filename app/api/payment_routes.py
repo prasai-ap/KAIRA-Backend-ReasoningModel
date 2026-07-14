@@ -61,14 +61,15 @@ def esewa_success(
 
         if esewa_status != "COMPLETE":
             return RedirectResponse(
-                url="http://localhost:5173/payment/failure"
+                url="http://localhost:5173/payment/failure?verified=false"
             )
 
-    if not transaction_uuid:
-        raise HTTPException(status_code=400, detail="Transaction UUID missing")
+    if not transaction_uuid or not total_amount:
+        return RedirectResponse(
+            url="http://localhost:5173/payment/failure?error=missing_payment_details"
+        )
 
-    if not total_amount:
-        raise HTTPException(status_code=400, detail="Total amount missing")
+    total_amount = str(int(float(total_amount)))
 
     verify_esewa_payment(
         db=db,
@@ -77,7 +78,7 @@ def esewa_success(
     )
 
     return RedirectResponse(
-        url="http://localhost:5173/payment/success"
+        url=f"http://localhost:5173/payment/success?verified=true&transaction_uuid={transaction_uuid}"
     )
 
 
