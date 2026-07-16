@@ -186,7 +186,7 @@ def send_message(db, user, message, session_id=None):
 
     try:
         reply = generate_ai_response(prompt)
-    except Exception:
+    except Exception as e:
         reply = "Sorry, I could not generate a response right now. Please try again."
 
     if not subscription:
