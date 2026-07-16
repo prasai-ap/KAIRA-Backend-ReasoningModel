@@ -188,6 +188,7 @@ def send_message(db, user, message, session_id=None):
         reply = generate_ai_response(prompt)
     except Exception as e:
         reply = "Sorry, I could not generate a response right now. Please try again."
+        print("GEMINI ERROR:", repr(e))
 
     if not subscription:
         increment_free_chat_used(db, user)
