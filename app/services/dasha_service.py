@@ -12,6 +12,7 @@ from app.utils.astrology_helpers import (
     _ensure_nested_dasha_end_dates,
 )
 
+from app.utils.dasha_timeline import extend_dasha_tree_for_old_births
 
 def dasha_rows_to_tree(rows: List[List[Any]], level: int) -> Dict[str, Any]:
     lvl = int(level)
@@ -154,8 +155,16 @@ def compute_vimshottari(jd: float, place_obj: drik.Place, levels: int) -> Dict[s
         use_tribhagi_variation=False,
         dhasa_level_index=int(levels),
     )
+
     tree = dasha_rows_to_tree(rows, level=levels)
     _ensure_nested_dasha_end_dates(tree)
+
+    tree = extend_dasha_tree_for_old_births(
+        tree=tree,
+        dasha_type="vimshottari",
+        years_ahead=100,
+    )
+
     return {"type": "vimshottari", "balance": vim_bal, "tree": tree}
 
 
@@ -166,10 +175,17 @@ def compute_tribhagi(jd: float, place_obj: drik.Place, levels: int) -> Dict[str,
         use_tribhagi_variation=True,
         dhasa_level_index=int(levels),
     )
+
     tree = dasha_rows_to_tree(rows, level=levels)
     _ensure_nested_dasha_end_dates(tree)
-    return {"type": "tribhagi", "balance": vim_bal, "tree": tree}
 
+    tree = extend_dasha_tree_for_old_births(
+        tree=tree,
+        dasha_type="tribhagi",
+        years_ahead=100,
+    )
+
+    return {"type": "tribhagi", "balance": vim_bal, "tree": tree}
 
 def compute_yogini(jd: float, place_obj: drik.Place) -> Dict[str, Any]:
     y, m, d, fh = utils.jd_to_gregorian(jd)
@@ -186,4 +202,13 @@ def compute_yogini(jd: float, place_obj: drik.Place) -> Dict[str, Any]:
         use_tribhagi_variation=False,
         dhasa_level_index=2,
     )
-    return {"type": "yogini", "tree": yogini_rows_to_tree_level2(rows)}
+
+    tree = yogini_rows_to_tree_level2(rows)
+
+    tree = extend_dasha_tree_for_old_births(
+        tree=tree,
+        dasha_type="yogini",
+        years_ahead=100,
+    )
+
+    return {"type": "yogini", "tree": tree}
